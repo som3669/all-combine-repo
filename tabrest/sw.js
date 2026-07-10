@@ -212,6 +212,23 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     chrome.tabs.reload(msg.tabId).then(() => { updateBadge(); sendResponse({ ok: true }); });
     return true;
   }
+  if (msg.type === "restoreAll") {
+    (async () => {
+      const tabs = await chrome.tabs.query({ discarded: true });
+      let n = 0;
+      for (const t of tabs) { try { await chrome.tabs.reload(t.id); n++; } catch {} }
+      updateBadge();
+      sendResponse({ restored: n });
+    })();
+    return true;
+  }
+  if (msg.type === "isWhitelisted") {
+    (async () => {
+      const { whitelist = [] } = await chrome.storage.sync.get({ whitelist: [] });
+      sendResponse({ listed: whitelist.includes(msg.host) });
+    })();
+    return true;
+  }
   if (msg.type === "stats") {
     (async () => {
       const discarded = await chrome.tabs.query({ discarded: true });

@@ -79,6 +79,16 @@
     .switch input:checked + .slider { background: var(--brand); }
     .switch input:checked + .slider::before { transform: translateX(17px); }
 
+    /* Idle preset chips */
+    .row.idle, .row.custom-row { flex-wrap: wrap; }
+    .presets { display: flex; gap: 6px; }
+    .presets button {
+      flex: none; width: auto; padding: 6px 10px; border-radius: 8px; font: 600 12px system-ui, sans-serif;
+      background: var(--sec-bg); color: var(--sec-ink); cursor: pointer;
+    }
+    .presets button.active { background: var(--brand); color: var(--brand-ink); }
+    .presets button:hover { filter: brightness(.97); }
+
     /* Number input */
     .num {
       width: 62px; padding: 6px 8px; text-align: center;
@@ -115,6 +125,13 @@
     /* Section title */
     .sect { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 6px; }
     .sect h2 { font-size: 11px; font-weight: 700; color: var(--muted); margin: 0; text-transform: uppercase; letter-spacing: .5px; }
+    .link-btn { width: auto; padding: 2px 4px; background: transparent; color: var(--brand); font: 600 11px system-ui, sans-serif; cursor: pointer; }
+    .link-btn:hover { text-decoration: underline; }
+
+    /* Visible focus for keyboard users */
+    button:focus-visible, input:focus-visible, a:focus-visible, .switch input:focus-visible + .slider {
+      outline: 2px solid var(--brand); outline-offset: 2px;
+    }
 
     /* List */
     ul { list-style: none; margin: 0; padding: 0; max-height: 190px; overflow-y: auto; }
@@ -158,13 +175,23 @@
       <div class="row">
         <label for="enabled">Auto-suspend idle tabs</label>
         <label class="switch">
-          <input type="checkbox" id="enabled">
+          <input type="checkbox" id="enabled" aria-label="Auto-suspend idle tabs">
           <span class="slider"></span>
         </label>
       </div>
-      <div class="row">
-        <label for="idle">Idle time (minutes)</label>
-        <input type="number" id="idle" class="num" min="1" max="720">
+      <div class="row idle">
+        <label>Suspend after</label>
+        <div class="presets" id="presets" role="group" aria-label="Idle time">
+          <button type="button" data-min="5">5m</button>
+          <button type="button" data-min="15">15m</button>
+          <button type="button" data-min="30">30m</button>
+          <button type="button" data-min="60">1h</button>
+          <button type="button" data-min="custom" id="customBtn">Custom</button>
+        </div>
+      </div>
+      <div class="row custom-row" id="customRow" hidden>
+        <label for="idle">Custom minutes</label>
+        <input type="number" id="idle" class="num" min="1" max="720" aria-label="Custom idle minutes">
       </div>
     </div>
 
@@ -184,7 +211,10 @@
       <button class="secondary wide" id="undo" hidden>↩ Undo last</button>
     </div>
 
-    <div class="sect"><h2>Suspended tabs</h2></div>
+    <div class="sect">
+      <h2>Suspended tabs</h2>
+      <button class="link-btn" id="restoreAll" hidden>Restore all</button>
+    </div>
     <ul id="list"></ul>
 
     <div class="status" id="status"></div>

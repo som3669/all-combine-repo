@@ -7,11 +7,13 @@
     :root {
       --bg: #f4f6fb; --panel: #ffffff; --brd: #e6eaf2; --text: #1a1d24;
       --muted: #7a8296; --brand: #2b6cff; --ok: #1a8a3a; --code: #eef1f6;
+      --chip: #eef2fb; --danger: #e0556a;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #131519; --panel: #1e2128; --brd: #2a2e37; --text: #e8eaf0;
         --muted: #9aa3b5; --brand: #4b83ff; --ok: #4ade80; --code: #262a33;
+        --chip: #242a36; --danger: #ff6b81;
       }
     }
     * { box-sizing: border-box; }
@@ -20,7 +22,7 @@
       font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     .card {
-      max-width: 560px; margin: 0 auto; background: var(--panel);
+      max-width: 580px; margin: 0 auto; background: var(--panel);
       border: 1px solid var(--brd); border-radius: 16px; padding: 26px 28px;
       box-shadow: 0 6px 24px rgba(20,30,60,.06);
     }
@@ -32,21 +34,59 @@
     }
     h1 { font-size: 19px; margin: 0; letter-spacing: -.3px; }
     h1 + p { margin: 1px 0 0; font-size: 12px; color: var(--muted); }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 24px 0 8px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 26px 0 8px; }
     .row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 11px 0; border-top: 1px solid var(--brd);
     }
     .row:first-of-type { border-top: 0; }
-    textarea {
-      width: 100%; height: 110px; padding: 10px 12px; resize: vertical;
-      font: 13px/1.5 ui-monospace, "SF Mono", Consolas, monospace;
-      border: 1px solid var(--brd); border-radius: 10px;
-      background: var(--bg); color: var(--text);
-    }
-    textarea:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: transparent; }
-    .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+    .hint { color: var(--muted); font-size: 12px; margin: 4px 0 10px; }
     code { background: var(--code); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+
+    input[type=text], input[type=number], select {
+      padding: 9px 11px; border: 1px solid var(--brd); border-radius: 9px;
+      background: var(--bg); color: var(--text); font: inherit;
+    }
+    input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: transparent; }
+
+    .add-row { display: flex; gap: 8px; }
+    .add-row input { flex: 1; }
+    .btn {
+      padding: 9px 16px; border: 0; border-radius: 9px; background: var(--brand);
+      color: #fff; font: 600 13px system-ui, sans-serif; cursor: pointer; white-space: nowrap;
+    }
+    .btn:hover { filter: brightness(1.06); }
+    .btn.ghost { background: var(--chip); color: var(--text); }
+
+    /* chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 7px; padding: 6px 8px 6px 12px;
+      background: var(--chip); border-radius: 999px; font-size: 13px;
+    }
+    .chip button {
+      border: 0; background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 15px; line-height: 1; padding: 0 2px; border-radius: 50%;
+    }
+    .chip button:hover { color: var(--danger); }
+    .cfav { width: 16px; height: 16px; border-radius: 4px; flex: none; }
+    .cfav.ph { display: inline-grid; place-items: center; background: var(--brd); font-size: 9px; color: var(--muted); }
+    .none { color: var(--muted); font-size: 13px; padding: 6px 0; }
+    button:focus-visible, input:focus-visible, select:focus-visible, .switch input:focus-visible + .slider {
+      outline: 2px solid var(--brand); outline-offset: 2px;
+    }
+
+    /* rule rows */
+    .rule { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .rule input[type=text] { flex: 1; }
+    .rule input[type=number] { width: 82px; }
+    .rule .unit { color: var(--muted); font-size: 12px; }
+    .rule .del {
+      border: 0; background: var(--chip); color: var(--muted); cursor: pointer;
+      width: 32px; height: 34px; border-radius: 9px; font-size: 15px;
+    }
+    .rule .del:hover { color: var(--danger); }
+
     /* switch */
     .switch { position: relative; width: 42px; height: 24px; flex: none; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -55,13 +95,13 @@
     .slider::before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
     .switch input:checked + .slider { background: var(--brand); }
     .switch input:checked + .slider::before { transform: translateX(18px); }
-    .actions { display: flex; align-items: center; gap: 14px; margin-top: 24px; }
-    button {
-      padding: 10px 22px; border: 0; border-radius: 10px; background: var(--brand);
-      color: #fff; font: 600 14px system-ui, sans-serif; cursor: pointer;
+
+    .saved {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--ok); color: #06210f; font-weight: 600; font-size: 13px;
+      padding: 8px 18px; border-radius: 999px; opacity: 0; transition: .25s; pointer-events: none;
     }
-    button:hover { filter: brightness(1.06); }
-    .status { color: var(--ok); font-size: 13px; font-weight: 600; }
+    .saved.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
@@ -70,7 +110,7 @@
       <div class="logo">Z</div>
       <div>
         <h1>TabRest Settings</h1>
-        <p>Control which tabs get suspended and when.</p>
+        <p>Changes save automatically.</p>
       </div>
     </div>
 
@@ -84,19 +124,23 @@
       <label class="switch"><input type="checkbox" id="skipPinned"><span class="slider"></span></label>
     </div>
 
-    <h2>Whitelist</h2>
-    <p class="hint">One hostname per line. These are never suspended.</p>
-    <textarea id="whitelist" placeholder="mail.google.com&#10;figma.com"></textarea>
+    <h2>Whitelist — never suspend</h2>
+    <p class="hint">Tip: fastest way is the <strong>🛡 Never suspend this site</strong> button in the popup.</p>
+    <div class="add-row">
+      <input type="text" id="wlInput" list="openHosts" placeholder="Pick an open tab or type a site…">
+      <button class="btn" id="wlAdd">Add</button>
+    </div>
+    <div class="chips" id="wlList"></div>
 
     <h2>Per-site idle rules</h2>
-    <p class="hint">One per line as <code>host = minutes</code>. Overrides the default idle time for that host.</p>
-    <textarea id="rules" placeholder="news.ycombinator.com = 5&#10;docs.google.com = 120"></textarea>
+    <p class="hint">Give a site its own idle time. Example: news sites suspend in <code>5</code> min, docs in <code>120</code>.</p>
+    <div id="ruleList"></div>
+    <button class="btn ghost" id="ruleAdd">+ Add rule</button>
 
-    <div class="actions">
-      <button id="save">Save changes</button>
-      <span class="status" id="status"></span>
-    </div>
+    <datalist id="openHosts"></datalist>
   </div>
+
+  <div class="saved" id="saved">Saved ✓</div>
 
   <script src="options.js"></script>
 </body>

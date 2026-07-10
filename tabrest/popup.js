@@ -2,23 +2,56 @@ const $ = (id) => document.getElementById(id);
 const status = (t) => { $("status").textContent = t; };
 
 const DEFAULTS = { enabled: true, idleMinutes: 30 };
+const PRESETS = [5, 15, 30, 60];
 
 async function load() {
   const s = await chrome.storage.sync.get(DEFAULTS);
   $("enabled").checked = s.enabled;
-  $("idle").value = s.idleMinutes;
+  applyIdleUI(s.idleMinutes);
 }
+
+// Highlight the matching preset chip, or reveal the custom field.
+function applyIdleUI(minutes) {
+  const chips = $("presets").querySelectorAll("button");
+  const isPreset = PRESETS.includes(minutes);
+  chips.forEach((b) => {
+    const m = b.dataset.min;
+    b.classList.toggle("active", m !== "custom" && Number(m) === minutes);
+  });
+  if (!isPreset) {
+    $("customBtn").classList.add("active");
+    $("customRow").hidden = false;
+    $("idle").value = minutes;
+  } else {
+    $("customBtn").classList.remove("active");
+    $("customRow").hidden = true;
+  }
+}
+
+async function setIdle(minutes) {
+  const v = Math.max(1, Math.min(720, parseInt(minutes, 10) || 30));
+  await chrome.storage.sync.set({ idleMinutes: v });
+  applyIdleUI(v);
+  status(`Suspend after ${v < 60 ? v + " min" : v / 60 + " h"}`);
+}
+
+$("presets").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  if (btn.dataset.min === "custom") {
+    $("customRow").hidden = false;
+    $("customBtn").classList.add("active");
+    $("idle").focus();
+    return;
+  }
+  setIdle(Number(btn.dataset.min));
+});
+
+$("idle").addEventListener("change", () => setIdle($("idle").value));
 
 $("enabled").addEventListener("change", async () => {
   await chrome.storage.sync.set({ enabled: $("enabled").checked });
   status($("enabled").checked ? "Auto-suspend on" : "Auto-suspend off");
-});
-
-$("idle").addEventListener("change", async () => {
-  const v = Math.max(1, Math.min(720, parseInt($("idle").value, 10) || 30));
-  $("idle").value = v;
-  await chrome.storage.sync.set({ idleMinutes: v });
-  status(`Idle set to ${v} min`);
 });
 
 function fmtMB(bytes) {
@@ -42,11 +75,36 @@ async function currentHost() {
   try { return new URL(tab.url).hostname; } catch { return ""; }
 }
 
+// Reflect whether the current site is already whitelisted.
+async function refreshWhitelistBtn() {
+  const btn = $("whitelistSite");
+  const host = await currentHost();
+  if (!host) { btn.disabled = true; btn.textContent = "🛡 Can't whitelist this page"; return; }
+  chrome.runtime.sendMessage({ type: "isWhitelisted", host }, (r) => {
+    if (r?.listed) {
+      btn.disabled = true;
+      btn.textContent = "✓ Site whitelisted";
+    } else {
+      btn.disabled = false;
+      btn.textContent = "🛡 Never suspend this site";
+    }
+  });
+}
+
 $("whitelistSite").addEventListener("click", async () => {
   const host = await currentHost();
   if (!host) { status("Can't whitelist this page"); return; }
   chrome.runtime.sendMessage({ type: "whitelistCurrent", host }, () => {
     status(`Added ${host} to whitelist`);
+    refreshWhitelistBtn();
+  });
+});
+
+$("restoreAll").addEventListener("click", () => {
+  status("Restoring all…");
+  chrome.runtime.sendMessage({ type: "restoreAll" }, (r) => {
+    status(`Restored ${r?.restored ?? 0} tabs`);
+    renderList(); renderStats();
   });
 });
 
@@ -62,6 +120,7 @@ function faviconEl(t) {
   if (t.favicon) {
     const img = document.createElement("img");
     img.className = "fav";
+    img.alt = "";
     img.src = t.favicon;
     img.onerror = () => { img.replaceWith(placeholderFav(t)); };
     return img;
@@ -81,6 +140,7 @@ function renderList() {
     const ul = $("list");
     ul.innerHTML = "";
     const tabs = r?.tabs ?? [];
+    $("restoreAll").hidden = tabs.length < 2;
     if (!tabs.length) {
       ul.innerHTML = '<li class="empty">No suspended tabs yet</li>';
       return;
@@ -100,6 +160,7 @@ function renderList() {
 
       const btn = document.createElement("button");
       btn.textContent = "Restore";
+      btn.setAttribute("aria-label", `Restore ${t.title}`);
       btn.addEventListener("click", () => {
         chrome.runtime.sendMessage({ type: "restoreTab", tabId: t.id }, () => { renderList(); renderStats(); });
       });
@@ -126,3 +187,4 @@ $("scanNow").addEventListener("click", () => {
 load();
 renderList();
 renderStats();
+refreshWhitelistBtn();
