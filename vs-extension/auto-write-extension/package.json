@@ -1,0 +1,55 @@
+{
+  "name": "auto-write",
+  "displayName": "Auto Write Loop",
+  "description": "Loops: types code character-by-character, erases it all, repeats until stopped",
+  "version": "0.1.0",
+  "publisher": "local",
+  "engines": { "vscode": "^1.74.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "autoWrite.start",
+        "title": "Auto Write: Start Loop"
+      },
+      {
+        "command": "autoWrite.stop",
+        "title": "Auto Write: Stop Loop"
+      },
+      {
+        "command": "autoWrite.setSnippet",
+        "title": "Auto Write: Set Custom Snippet"
+      }
+    ],
+    "configuration": {
+      "title": "Auto Write Loop",
+      "properties": {
+        "autoWrite.typeDelayMs": {
+          "type": "number",
+          "default": 40,
+          "description": "Delay between each typed character (ms)"
+        },
+        "autoWrite.eraseDelayMs": {
+          "type": "number",
+          "default": 15,
+          "description": "Delay between each erased character (ms)"
+        },
+        "autoWrite.pauseBetweenLoopsMs": {
+          "type": "number",
+          "default": 800,
+          "description": "Pause after erase before next loop starts (ms)"
+        },
+        "autoWrite.snippet": {
+          "type": "string",
+          "default": "",
+          "description": "Custom code snippet to loop. If empty, cycles through built-in snippets."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0"
+  }
+}

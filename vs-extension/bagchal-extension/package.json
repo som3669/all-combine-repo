@@ -1,0 +1,32 @@
+{
+  "name": "bagchal-game",
+  "displayName": "Bagchal — Tiger & Goat",
+  "description": "Traditional Nepali बाघचाल board game — play vs AI or 2 players offline",
+  "version": "0.0.3",
+  "publisher": "somshrestha",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/som3669/bagchal"
+  },
+  "license": "MIT",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "keywords": ["bagchal", "game", "nepal", "tiger", "goat", "board game"],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "bagchal.play",
+        "title": "Bagchal: Play Tiger & Goat Game"
+      }
+    ]
+  },
+  "scripts": {
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.0.0"
+  }
+}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bagchal — Tiger &amp; Goat</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#181825;color:#cdd6f4;
+  font-family:'Segoe UI',sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;padding:20px 16px;gap:12px;
+}
+h1{font-size:28px;letter-spacing:3px}
+.sub{color:#585b70;font-size:13px}
+#lobby{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:28px 36px;
+}
+#lobby h2{font-size:18px;margin-bottom:4px}
+#lobby p{color:#a6adc8;font-size:13px;text-align:center;max-width:280px}
+.role-btns{display:flex;gap:12px;margin-top:6px}
+.role-btn{
+  padding:12px 28px;border-radius:8px;border:2px solid;cursor:pointer;
+  font-size:15px;font-weight:600;background:transparent;transition:all .2s;
+}
+.role-btn.goat{color:#a6e3a1;border-color:#a6e3a1}
+.role-btn.goat:hover{background:#a6e3a1;color:#11111b}
+.role-btn.tiger{color:#f38ba8;border-color:#f38ba8}
+.role-btn.tiger:hover{background:#f38ba8;color:#11111b}
+.role-btn:disabled{opacity:.4;cursor:not-allowed}
+#game{display:none;flex-direction:column;align-items:center;gap:12px}
+#status{
+  font-size:15px;padding:8px 24px;border-radius:20px;
+  background:#1e1e2e;border:1px solid #313244;
+  min-width:300px;text-align:center;transition:all .3s;
+}
+#board{cursor:pointer;filter:drop-shadow(0 6px 18px rgba(0,0,0,.6))}
+.info{display:flex;gap:28px;font-size:14px;color:#a6adc8}
+.info span{color:#cdd6f4;font-weight:600}
+.btns{display:flex;gap:10px}
+button.act{
+  padding:8px 22px;background:#313244;color:#cdd6f4;
+  border:1px solid #45475a;border-radius:6px;cursor:pointer;font-size:13px;
+}
+button.act:hover{background:#45475a}
+.legend{display:flex;gap:18px;font-size:12px;color:#6c7086}
+.li{display:flex;align-items:center;gap:5px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+#conn{font-size:12px;color:#6c7086;margin-top:4px}
+#myrole{
+  font-size:13px;padding:4px 14px;border-radius:12px;
+  border:1px solid #313244;background:#1e1e2e;color:#a6adc8;
+}
+</style>
+</head>
+<body>
+<h1>बाघचाल</h1>
+<div class="sub">Traditional Nepali Tiger &amp; Goat — Multiplayer</div>
+
+<div id="lobby">
+  <h2>Choose your role</h2>
+  <p>One player picks Tiger, the other picks Goat. Share this page URL with your friend.</p>
+  <div class="role-btns">
+    <button class="role-btn goat" id="btnGoat" onclick="join('goat')">🐐 Goat</button>
+    <button class="role-btn tiger" id="btnTiger" onclick="join('tiger')">🐅 Tiger</button>
+  </div>
+  <div id="conn">Connecting…</div>
+</div>
+
+<div id="game">
+  <div id="myrole">Role: —</div>
+  <div id="status">Waiting…</div>
+  <svg id="board" width="460" height="460" viewBox="0 0 460 460"></svg>
+  <div class="info">
+    <div>Goats to place: <span id="toPlace">20</span></div>
+    <div>Goats captured: <span id="captured">0</span></div>
+  </div>
+  <div class="btns">
+    <button class="act" onclick="reset()">New Game</button>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="dot" style="background:#f38ba8"></div>Tiger</div>
+    <div class="li"><div class="dot" style="background:#a6e3a1"></div>Goat</div>
+    <div class="li"><div class="dot" style="background:#89b4fa;opacity:.5"></div>Valid move</div>
+  </div>
+</div>
+
+<script>
+var EMPTY=0,GOAT=1,TIGER=2;
+var PAD=55,STP=87;
+var myRole=null,state=null,sel=null;
+var ws;
+
+function connect(){
+    var proto=location.protocol==='https:'?'wss':'ws';
+    ws=new WebSocket(proto+'://'+location.host);
+    ws.onopen=function(){
+        document.getElementById('conn').textContent='Connected — pick a role';
+    };
+    ws.onclose=function(){
+        document.getElementById('conn').textContent='Disconnected. Refresh to reconnect.';
+    };
+    ws.onmessage=function(e){
+        var msg=JSON.parse(e.data);
+        if(msg.type==='joined'){
+            myRole=msg.role;
+            document.getElementById('myrole').textContent='You are: '+(myRole==='tiger'?'🐅 Tiger':'🐐 Goat');
+            document.getElementById('lobby').style.display='none';
+            document.getElementById('game').style.display='flex';
+        }
+        if(msg.type==='state'){ state=msg.state; sel=null; render(); updateStatus(); updateLobbyBtns(msg.roles); }
+        if(msg.type==='error'){ /* ignore */ }
+        if(msg.type==='player_left'){
+            updateStatus('Opponent disconnected. Waiting for reconnect…');
+        }
+    };
+}
+
+function updateLobbyBtns(roles){
+    var bg=document.getElementById('btnGoat');
+    var bt=document.getElementById('btnTiger');
+    if(bg) bg.disabled=roles.goat;
+    if(bt) bt.disabled=roles.tiger;
+}
+
+function join(role){ ws.send(JSON.stringify({type:'join',role:role})); }
+function reset(){ ws.send(JSON.stringify({type:'reset'})); }
+
+// ─── Board geometry ───
+function xy(i){return{x:PAD+(i%5)*STP,y:PAD+Math.floor(i/5)*STP};}
+
+function nbrs(pos){
+    var r=Math.floor(pos/5),c=pos%5,out=[];
+    var dirs=[[-1,0],[1,0],[0,-1],[0,1]];
+    if((r+c)%2===0) dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
+    for(var d=0;d<dirs.length;d++){
+        var nr=r+dirs[d][0],nc=c+dirs[d][1];
+        if(nr>=0&&nr<5&&nc>=0&&nc<5) out.push(nr*5+nc);
+    }
+    return out;
+}
+
+function goatDests(){
+    if(!sel||state.board[sel]!==GOAT) return [];
+    return nbrs(sel).filter(function(t){return state.board[t]===EMPTY;});
+}
+
+function tigerCaptures(from){
+    var caps=[];
+    nbrs(from).forEach(function(gp){
+        if(state.board[gp]!==GOAT) return;
+        var to=2*gp-from;
+        if(to<0||to>=25) return;
+        if(nbrs(gp).indexOf(to)<0) return;
+        if(state.board[to]!==EMPTY) return;
+        caps.push(to);
+    });
+    return caps;
+}
+
+function tigerDests(){
+    if(!sel||state.board[sel]!==TIGER) return [];
+    var regular=nbrs(sel).filter(function(t){return state.board[t]===EMPTY;});
+    return regular.concat(tigerCaptures(sel));
+}
+
+function validDests(){
+    if(!state||state.over) return [];
+    if(myRole==='goat'&&state.turn==='goat') return goatDests();
+    if(myRole==='tiger'&&state.turn==='tiger') return tigerDests();
+    return [];
+}
+
+function click(pos){
+    if(!state||state.over) return;
+    if(myRole!==state.turn) return;
+
+    if(state.phase==='placement'&&myRole==='goat'){
+        if(state.board[pos]!==EMPTY) return;
+        ws.send(JSON.stringify({type:'place',pos:pos}));
+        return;
+    }
+
+    // Movement
+    if(sel===null){
+        if(state.board[pos]===GOAT&&myRole==='goat'){sel=pos;render();}
+        if(state.board[pos]===TIGER&&myRole==='tiger'){sel=pos;render();}
+    } else {
+        if(pos===sel){sel=null;render();return;}
+        if(state.board[pos]===myRole.charAt(0).toUpperCase()+myRole.slice(1)){ /* nope */ }
+        var dests=validDests();
+        if(dests.indexOf(pos)>=0){
+            ws.send(JSON.stringify({type:'move',from:sel,to:pos}));
+            sel=null;
+        } else {
+            // re-select own piece
+            if(myRole==='goat'&&state.board[pos]===GOAT){sel=pos;render();}
+            else if(myRole==='tiger'&&state.board[pos]===TIGER){sel=pos;render();}
+            else{sel=null;render();}
+        }
+    }
+}
+
+function render(){
+    if(!state) return;
+    var svg=document.getElementById('board');
+    svg.innerHTML='';
+    var ns='http://www.w3.org/2000/svg';
+    function el(tag,attrs){
+        var e=document.createElementNS(ns,tag);
+        for(var k in attrs) e.setAttribute(k,attrs[k]);
+        return e;
+    }
+    svg.appendChild(el('rect',{width:460,height:460,fill:'#1e1e2e',rx:14}));
+
+    for(var i=0;i<25;i++){
+        var nb=nbrs(i);
+        for(var k=0;k<nb.length;k++){
+            var j=nb[k];
+            if(j>i){
+                var p1=xy(i),p2=xy(j);
+                svg.appendChild(el('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,
+                    stroke:'#45475a','stroke-width':2,'stroke-linecap':'round'}));
+            }
+        }
+    }
+
+    var dests=validDests();
+
+    for(var i=0;i<25;i++){
+        (function(pos){
+            var p=xy(pos);
+            var g=document.createElementNS(ns,'g');
+            g.setAttribute('transform','translate('+p.x+','+p.y+')');
+            g.style.cursor='pointer';
+            g.addEventListener('click',function(){click(pos);});
+
+            if(dests.indexOf(pos)>=0){
+                g.appendChild(el('circle',{r:28,fill:'#89b4fa',opacity:0.22}));
+            }
+            if(state.board[pos]!==EMPTY){
+                g.appendChild(el('circle',{r:22,fill:'#11111b',opacity:0.4,cy:3}));
+            }
+
+            var radius=state.board[pos]!==EMPTY?20:10;
+            if(pos===sel) radius=22;
+            var fill;
+            if(pos===sel) fill='#fab387';
+            else if(state.board[pos]===TIGER) fill='#f38ba8';
+            else if(state.board[pos]===GOAT) fill='#a6e3a1';
+            else fill='#313244';
+
+            var circ=el('circle',{r:radius,fill:fill});
+            if(state.board[pos]===EMPTY){ circ.setAttribute('stroke','#585b70'); circ.setAttribute('stroke-width','2'); }
+            g.appendChild(circ);
+
+            if(state.board[pos]!==EMPTY){
+                var txt=document.createElementNS(ns,'text');
+                txt.setAttribute('text-anchor','middle');
+                txt.setAttribute('dominant-baseline','central');
+                txt.setAttribute('font-size','16');
+                txt.setAttribute('pointer-events','none');
+                txt.textContent=state.board[pos]===TIGER?'🐅':'🐐';
+                g.appendChild(txt);
+            }
+
+            g.appendChild(el('circle',{r:32,fill:'transparent'}));
+            svg.appendChild(g);
+        })(i);
+    }
+
+    document.getElementById('toPlace').textContent=state.goatsLeft;
+    document.getElementById('captured').textContent=state.captured;
+}
+
+function updateStatus(override){
+    var el=document.getElementById('status');
+    if(override){el.textContent=override;return;}
+    if(!state){el.textContent='Waiting for both players…';return;}
+    if(state.over){
+        if(state.winner==='tiger'){
+            el.textContent='🐅 Tigers win! 5 goats captured';
+            el.style.cssText='background:#3d1f2a;border-color:#f38ba8;color:#f38ba8';
+        } else {
+            el.textContent='🐐 Goats win! Tigers are blocked';
+            el.style.cssText='background:#1f3d2a;border-color:#a6e3a1;color:#a6e3a1';
+        }
+        return;
+    }
+    el.style.cssText='background:#1e1e2e;border-color:#313244;color:#cdd6f4';
+    var mine=myRole===state.turn;
+    if(state.phase==='placement'){
+        el.textContent=mine?'🐐 Your turn — place a goat ('+state.goatsLeft+' left)':'⏳ Opponent placing goat…';
+    } else {
+        if(mine){
+            el.textContent=sel!==null?
+                (myRole==='goat'?'🐐 Click destination':'🐅 Click destination'):
+                (myRole==='goat'?'🐐 Your turn — select a goat':'🐅 Your turn — select a tiger');
+        } else {
+            el.textContent='⏳ Opponent is moving…';
+        }
+    }
+}
+
+connect();
+</script>
+</body>
+</html>

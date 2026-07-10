@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TabLite</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <span class="logo">◐</span>
+      <h1>TabLite</h1>
+    </div>
+    <label class="master-toggle" title="Enable automatic suspension">
+      <input type="checkbox" id="enabledToggle" />
+      <span class="switch"></span>
+    </label>
+  </header>
+
+  <section class="savings" id="savings">
+    <div class="savings-value" id="savingsValue">~0 MB</div>
+    <div class="savings-label">estimated memory saved</div>
+    <div class="savings-sub" id="savingsSub"></div>
+  </section>
+
+  <section class="controls">
+    <div class="control-row">
+      <label for="thresholdRange">Suspend after</label>
+      <span class="threshold-value"><span id="thresholdValue">10</span> min</span>
+    </div>
+    <input type="range" id="thresholdRange" min="1" max="120" step="1" value="10" />
+    <button id="suspendAllBtn" class="primary-btn">Suspend All Inactive Tabs Now</button>
+  </section>
+
+  <section class="tab-list-wrap">
+    <div class="list-header">
+      <span>Open tabs</span>
+      <span id="tabCount" class="muted"></span>
+    </div>
+    <ul id="tabList" class="tab-list"></ul>
+  </section>
+
+  <footer class="footer">
+    <span class="muted">Toggle a tab to keep it always active.</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

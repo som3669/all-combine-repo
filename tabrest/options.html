@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TabRest Settings</title>
+  <style>
+    :root {
+      --bg: #f4f6fb; --panel: #ffffff; --brd: #e6eaf2; --text: #1a1d24;
+      --muted: #7a8296; --brand: #2b6cff; --ok: #1a8a3a; --code: #eef1f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #131519; --panel: #1e2128; --brd: #2a2e37; --text: #e8eaf0;
+        --muted: #9aa3b5; --brand: #4b83ff; --ok: #4ade80; --code: #262a33;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 40px 16px; background: var(--bg); color: var(--text);
+      font: 14px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .card {
+      max-width: 560px; margin: 0 auto; background: var(--panel);
+      border: 1px solid var(--brd); border-radius: 16px; padding: 26px 28px;
+      box-shadow: 0 6px 24px rgba(20,30,60,.06);
+    }
+    .head { display: flex; align-items: center; gap: 11px; margin-bottom: 22px; }
+    .logo {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, #2b6cff, #6a9bff);
+      display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 18px;
+    }
+    h1 { font-size: 19px; margin: 0; letter-spacing: -.3px; }
+    h1 + p { margin: 1px 0 0; font-size: 12px; color: var(--muted); }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin: 24px 0 8px; }
+    .row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 0; border-top: 1px solid var(--brd);
+    }
+    .row:first-of-type { border-top: 0; }
+    textarea {
+      width: 100%; height: 110px; padding: 10px 12px; resize: vertical;
+      font: 13px/1.5 ui-monospace, "SF Mono", Consolas, monospace;
+      border: 1px solid var(--brd); border-radius: 10px;
+      background: var(--bg); color: var(--text);
+    }
+    textarea:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: transparent; }
+    .hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+    code { background: var(--code); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+    /* switch */
+    .switch { position: relative; width: 42px; height: 24px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; cursor: pointer; border-radius: 999px; background: #c6ccd8; transition: .2s; }
+    @media (prefers-color-scheme: dark) { .slider { background: #3a404d; } }
+    .slider::before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .switch input:checked + .slider { background: var(--brand); }
+    .switch input:checked + .slider::before { transform: translateX(18px); }
+    .actions { display: flex; align-items: center; gap: 14px; margin-top: 24px; }
+    button {
+      padding: 10px 22px; border: 0; border-radius: 10px; background: var(--brand);
+      color: #fff; font: 600 14px system-ui, sans-serif; cursor: pointer;
+    }
+    button:hover { filter: brightness(1.06); }
+    .status { color: var(--ok); font-size: 13px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="logo">Z</div>
+      <div>
+        <h1>TabRest Settings</h1>
+        <p>Control which tabs get suspended and when.</p>
+      </div>
+    </div>
+
+    <h2>Skip rules</h2>
+    <div class="row">
+      <span>Skip tabs playing audio</span>
+      <label class="switch"><input type="checkbox" id="skipAudible"><span class="slider"></span></label>
+    </div>
+    <div class="row">
+      <span>Skip pinned tabs</span>
+      <label class="switch"><input type="checkbox" id="skipPinned"><span class="slider"></span></label>
+    </div>
+
+    <h2>Whitelist</h2>
+    <p class="hint">One hostname per line. These are never suspended.</p>
+    <textarea id="whitelist" placeholder="mail.google.com&#10;figma.com"></textarea>
+
+    <h2>Per-site idle rules</h2>
+    <p class="hint">One per line as <code>host = minutes</code>. Overrides the default idle time for that host.</p>
+    <textarea id="rules" placeholder="news.ycombinator.com = 5&#10;docs.google.com = 120"></textarea>
+
+    <div class="actions">
+      <button id="save">Save changes</button>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

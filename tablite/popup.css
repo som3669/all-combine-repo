@@ -1,0 +1,143 @@
+/* TabLite popup — clean, minimal, dark-mode aware.
+   Light theme by default; dark theme via prefers-color-scheme. */
+
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f4f5f7;
+  --bg-hover: #eceef1;
+  --text: #1c1e21;
+  --text-muted: #6b7280;
+  --border: #e2e4e8;
+  --accent: #3b82f6;
+  --accent-soft: #dbeafe;
+  --active: #16a34a;
+  --suspended: #9333ea;
+  --excluded: #d97706;
+  --shadow: rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1f24;
+    --bg-alt: #24282f;
+    --bg-hover: #2c313a;
+    --text: #e7e9ec;
+    --text-muted: #9aa2af;
+    --border: #333944;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --active: #4ade80;
+    --suspended: #c084fc;
+    --excluded: #fbbf24;
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 340px;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ---- header ---- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.logo { font-size: 18px; color: var(--accent); }
+.header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+
+/* ---- toggle switch (used in header + list rows) ---- */
+.master-toggle, .row-toggle { position: relative; display: inline-block; cursor: pointer; }
+.master-toggle input, .row-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.switch {
+  display: inline-block;
+  width: 34px; height: 18px;
+  background: var(--border);
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.15s ease;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+input:checked + .switch { background: var(--accent); }
+input:checked + .switch::after { transform: translateX(16px); }
+
+/* ---- savings banner ---- */
+.savings {
+  text-align: center;
+  padding: 16px 14px 14px;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+.savings-value { font-size: 26px; font-weight: 700; color: var(--accent); }
+.savings-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.savings-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+/* ---- controls ---- */
+.controls { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.threshold-value { color: var(--accent); font-weight: 600; }
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 4px 0 12px;
+}
+.primary-btn {
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.primary-btn:hover { filter: brightness(1.08); }
+.primary-btn:active { filter: brightness(0.95); }
+.primary-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ---- tab list ---- */
+.tab-list-wrap { padding: 10px 14px 4px; }
+.list-header {
+  display: flex; justify-content: space-between;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.tab-list { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow-y: auto; }
+.tab-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 6px;
+  border-radius: 8px;
+}
+.tab-item:hover { background: var(--bg-hover); }
+.tab-favicon { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 3px; }
+.tab-meta { flex: 1; min-width: 0; }
+.tab-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-status { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.status-active { color: var(--active); }
+.status-suspended { color: var(--suspended); }
+.status-excluded { color: var(--excluded); }
+
+/* ---- footer ---- */
+.footer { padding: 10px 14px; border-top: 1px solid var(--border); }
+.muted { color: var(--text-muted); font-size: 11px; }

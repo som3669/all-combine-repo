@@ -1,0 +1,92 @@
+{
+  "name": "wp-debug-log-viewer",
+  "displayName": "WP Debug Log Viewer",
+  "description": "Real-time WordPress debug.log viewer with color-coded errors, filters, and clickable file links.",
+  "version": "0.0.5",
+  "publisher": "somshrestha",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/som3669/wp-debug-log-viewer"
+  },
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "keywords": ["wordpress", "debug", "log", "php", "error", "wp-content"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "wpDebugLog.open",
+        "title": "WP Debug Log: Open Viewer",
+        "icon": "$(bug)"
+      },
+      {
+        "command": "wpDebugLog.openManual",
+        "title": "WP Debug Log: Open Manual"
+      },
+      {
+        "command": "wpDebugLog.popOut",
+        "title": "WP Debug Log: Pop Out to Window",
+        "icon": "$(link-external)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "wpDebugLog.open",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l"
+      }
+    ],
+    "configuration": {
+      "title": "WP Debug Log Viewer",
+      "properties": {
+        "wpDebugLog.statusBarSide": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "default": "left",
+          "description": "Which side of the status bar to show the WP Log button.",
+          "enumDescriptions": ["Left side (next to other indicators)", "Right side (primary bar)"]
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "wpDebugLogContainer",
+          "title": "WP Debug Log",
+          "icon": "bug-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "wpDebugLogContainer": [
+        {
+          "type": "webview",
+          "id": "wpDebugLog.view",
+          "name": "WP Debug Log"
+        }
+      ]
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "wpDebugLog.open",
+          "when": "resourceFilename == debug.log",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-dependencies --allow-star-activation"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^2.0.0"
+  }
+}
