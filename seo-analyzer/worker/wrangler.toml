@@ -1,0 +1,13 @@
+name = "seo-inspector-license"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# KV namespace for storing valid license keys.
+# Create it first:  wrangler kv namespace create LICENSES
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "LICENSES"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+
+# Secret (do NOT put here). Set with:
+#   wrangler secret put FS_WEBHOOK_SECRET
