@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "AutoFiller",
+  "version": "1.0.0",
+  "description": "One-click form filler with realistic fake data or your saved profile. Built for developers and QA testing.",
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
+  "action": {
+    "default_title": "AutoFiller — click to fill with fake data",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_page": "options.html",
+  "background": { "service_worker": "sw.js" },
+  "commands": {
+    "fake-fill": {
+      "suggested_key": { "default": "Alt+Shift+F" },
+      "description": "Fill all inputs (fake data)"
+    },
+    "fill-form": {
+      "description": "Fill this form (fake data)"
+    },
+    "fill-input": {
+      "description": "Fill this input (fake data)"
+    },
+    "fill-page": {
+      "suggested_key": { "default": "Alt+Shift+D" },
+      "description": "Fill with my profile"
+    }
+  }
+}

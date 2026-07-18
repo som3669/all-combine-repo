@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AutoFiller Settings</title>
+  <style>
+    :root {
+      --bg:#f4f6fb; --panel:#fff; --brd:#e6eaf2; --text:#1a1d24; --muted:#7a8296;
+      --brand:#7c3aed; --brand2:#a855f7; --ok:#1a8a3a; --chip:#f1eafe; --danger:#e0556a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#131519; --panel:#1e2128; --brd:#2a2e37; --text:#e8eaf0; --muted:#9aa3b5;
+        --brand:#a855f7; --brand2:#c084fc; --ok:#4ade80; --chip:#2a2440; --danger:#ff6b81; }
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:40px 16px; background:var(--bg); color:var(--text); font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .card { max-width:620px; margin:0 auto; background:var(--panel); border:1px solid var(--brd); border-radius:16px; padding:26px 28px; box-shadow:0 6px 24px rgba(20,30,60,.06); }
+    .head { display:flex; align-items:center; gap:11px; margin-bottom:22px; }
+    .logo { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--brand),var(--brand2)); display:grid; place-items:center; color:#fff; font-weight:800; font-size:18px; }
+    h1 { font-size:19px; margin:0; }
+    h1 + p { margin:1px 0 0; font-size:12px; color:var(--muted); }
+    h2 { font-size:13px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:26px 0 10px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
+    .field { display:flex; flex-direction:column; gap:4px; }
+    .field.full { grid-column:1 / -1; }
+    label { font-size:12px; color:var(--muted); }
+    input[type=text], input[type=email], input[type=tel] {
+      padding:9px 11px; border:1px solid var(--brd); border-radius:9px; background:var(--bg); color:var(--text); font:inherit; width:100%;
+    }
+    input:focus { outline:2px solid var(--brand); outline-offset:-1px; border-color:transparent; }
+    .hint { color:var(--muted); font-size:12px; margin:2px 0 10px; }
+    code { background:var(--chip); padding:1px 6px; border-radius:5px; font-size:12px; }
+    .rule { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+    .rule input { flex:1; }
+    .rule .site { max-width:130px; }
+    .rule .del { border:0; background:var(--chip); color:var(--muted); cursor:pointer; width:34px; height:36px; border-radius:9px; font-size:16px; flex:none; }
+    .rule .del:hover { color:var(--danger); }
+    .btn { padding:9px 16px; border:0; border-radius:9px; background:var(--brand); color:#fff; font:600 13px system-ui,sans-serif; cursor:pointer; }
+    .btn.ghost { background:var(--chip); color:var(--text); }
+    .btn:hover { filter:brightness(1.06); }
+    .saved { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ok); color:#06210f; font-weight:600; font-size:13px; padding:8px 18px; border-radius:999px; opacity:0; transition:.25s; pointer-events:none; }
+    .saved.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    button:focus-visible, input:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+    .chk { display:flex; gap:6px; align-items:center; font-size:13px; color:var(--text); }
+    .tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--brd); margin-bottom:20px; }
+    .tab-btn { background:transparent; border:0; padding:10px 14px; font:600 13px system-ui,sans-serif; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--brand); border-bottom-color:var(--brand); }
+    section.tab { display:none; }
+    section.tab.active { display:block; }
+    section.tab h2:first-child { margin-top:0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="logo">A</div>
+      <div>
+        <h1>AutoFiller Settings</h1>
+        <p>Changes save automatically.</p>
+      </div>
+    </div>
+
+    <nav class="tabs" id="tabnav">
+      <button class="tab-btn active" data-tab="general">General</button>
+      <button class="tab-btn" data-tab="custom">Custom Fields</button>
+      <button class="tab-btn" data-tab="shortcuts">Keyboard Shortcuts</button>
+      <button class="tab-btn" data-tab="backup">Backup &amp; Restore</button>
+      <button class="tab-btn" data-tab="help">Help</button>
+    </nav>
+
+    <section class="tab active" data-tab="general">
+    <h2>Your profile</h2>
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap">
+      <label for="profileSel" style="color:var(--muted); font-size:12px">Profile:</label>
+      <select id="profileSel" style="flex:1; min-width:140px"></select>
+      <button class="btn ghost" id="profNew" title="New profile">＋ New</button>
+      <button class="btn ghost" id="profRename" title="Rename">✎</button>
+      <button class="btn ghost" id="profDelete" title="Delete">🗑</button>
+    </div>
+    <div class="grid" id="profile">
+      <div class="field"><label for="firstName">First name</label><input type="text" id="firstName"></div>
+      <div class="field"><label for="lastName">Last name</label><input type="text" id="lastName"></div>
+      <div class="field full"><label for="fullName">Full name</label><input type="text" id="fullName"></div>
+      <div class="field"><label for="email">Email</label><input type="email" id="email"></div>
+      <div class="field"><label for="phone">Phone</label><input type="tel" id="phone"></div>
+      <div class="field full"><label for="address1">Address line 1</label><input type="text" id="address1"></div>
+      <div class="field full"><label for="address2">Address line 2</label><input type="text" id="address2"></div>
+      <div class="field"><label for="city">City</label><input type="text" id="city"></div>
+      <div class="field"><label for="state">State / Province</label><input type="text" id="state"></div>
+      <div class="field"><label for="zip">ZIP / Postal code</label><input type="text" id="zip"></div>
+      <div class="field"><label for="country">Country</label><input type="text" id="country"></div>
+      <div class="field"><label for="company">Company</label><input type="text" id="company"></div>
+      <div class="field"><label for="website">Website</label><input type="text" id="website"></div>
+    </div>
+
+    <h2>Fake data settings</h2>
+    <p class="hint">Controls the <strong>🎲 Fill with fake data</strong> mode.</p>
+
+    <div class="field full">
+      <label>Password value</label>
+      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:2px 0 6px">
+        <label style="display:flex; gap:6px; align-items:center; color:var(--text); font-size:13px"><input type="radio" name="pwmode" id="pwFixed" value="fixed"> Use this value</label>
+        <label style="display:flex; gap:6px; align-items:center; color:var(--text); font-size:13px"><input type="radio" name="pwmode" id="pwRandom" value="random"> Random 8 characters</label>
+      </div>
+      <input type="text" id="fPassword" placeholder="Test@1234">
+    </div>
+
+    <div class="field full" style="margin-top:10px">
+      <label for="fIgnore">Ignore fields matching (comma separated)</label>
+      <input type="text" id="fIgnore" placeholder="captcha, otp">
+    </div>
+
+    <div class="row" style="border-top:0; padding:8px 0"><span>Ignore hidden / invisible fields</span>
+      <label class="switch"><input type="checkbox" id="fIgnoreHidden"><span class="slider"></span></label>
+    </div>
+    <div class="row" style="border-top:0; padding:8px 0"><span>Ignore fields that already have content</span>
+      <label class="switch"><input type="checkbox" id="fIgnoreFilled"><span class="slider"></span></label>
+    </div>
+    <div class="row" style="border-top:0; padding:8px 0"><span>Highlight filled fields (green flash)</span>
+      <label class="switch"><input type="checkbox" id="fHighlight"><span class="slider"></span></label>
+    </div>
+
+    <div class="field full" style="margin-top:8px">
+      <label for="fConfirm">Confirmation fields (reuse preceding value)</label>
+      <input type="text" id="fConfirm" placeholder="confirm, reenter, retype">
+    </div>
+    <div class="field full" style="margin-top:8px">
+      <label for="fAgree">Agree-to-terms fields (always checked)</label>
+      <input type="text" id="fAgree" placeholder="agree, terms, conditions">
+    </div>
+
+    <div class="field full" style="margin-top:10px">
+      <label>Match fields using</label>
+      <div id="matchUsing" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; margin-top:4px">
+        <label class="chk"><input type="checkbox" data-mu="id"> ID attribute</label>
+        <label class="chk"><input type="checkbox" data-mu="name"> Name attribute</label>
+        <label class="chk"><input type="checkbox" data-mu="label"> Label text</label>
+        <label class="chk"><input type="checkbox" data-mu="ariaLabel"> aria-label</label>
+        <label class="chk"><input type="checkbox" data-mu="ariaLabelledby"> aria-labelledby</label>
+        <label class="chk"><input type="checkbox" data-mu="class"> Class attribute</label>
+        <label class="chk"><input type="checkbox" data-mu="placeholder"> Placeholder</label>
+      </div>
+    </div>
+
+    <div class="field" style="max-width:180px; margin-top:10px">
+      <label for="fMaxLen">Maximum text length</label>
+      <input type="text" id="fMaxLen" inputmode="numeric" placeholder="20">
+    </div>
+
+    </section>
+
+    <section class="tab" data-tab="custom">
+    <h2>Custom field rules</h2>
+    <p class="hint">Fill any field the profile doesn't cover. <strong>Match</strong> = part of the field's name/label/placeholder (e.g. <code>coupon</code>) or a CSS selector (e.g. <code>#promo</code>). Pick a <strong>type</strong> to generate values. <strong>Site</strong> is optional — leave blank to apply everywhere.</p>
+    <div id="ruleList"></div>
+    <button class="btn ghost" id="ruleAdd">+ Add rule</button>
+    </section>
+
+    <section class="tab" data-tab="shortcuts">
+    <h2>Keyboard shortcuts</h2>
+    <table style="width:100%; border-collapse:collapse; font-size:13px">
+      <tbody id="shortcutRows">
+        <tr><td style="padding:6px 0; color:var(--muted)">Fill all inputs</td><td style="text-align:right"><code>Alt+Shift+F</code></td></tr>
+        <tr><td style="padding:6px 0; color:var(--muted)">Fill this form</td><td style="text-align:right"><code>Not set</code></td></tr>
+        <tr><td style="padding:6px 0; color:var(--muted)">Fill this input</td><td style="text-align:right"><code>Not set</code></td></tr>
+        <tr><td style="padding:6px 0; color:var(--muted)">Fill with my profile</td><td style="text-align:right"><code>Alt+Shift+D</code></td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:8px"><a href="#" id="openShortcuts" style="color:var(--brand); text-decoration:none; font-weight:500">Change keyboard shortcuts →</a></p>
+    </section>
+
+    <section class="tab" data-tab="backup">
+    <h2>Backup and restore</h2>
+    <p class="hint">Export all your settings (profile, rules, fake-data options) to a file, or import them on another device.</p>
+    <div style="display:flex; gap:10px">
+      <button class="btn" id="exportBtn">⬇ Export settings</button>
+      <button class="btn ghost" id="importBtn">⬆ Import settings</button>
+      <button class="btn ghost" id="importFF">⬆ Import from Fake Filler</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <input type="file" id="importFFFile" accept="application/json,.json" hidden>
+    </div>
+    </section>
+
+    <section class="tab" data-tab="help">
+    <h2>Help</h2>
+    <p style="font-size:13px; line-height:1.6">
+      <strong>Fill a form:</strong> click the AutoFiller toolbar icon to fill the whole page with fake data.
+    </p>
+    <ul style="font-size:13px; line-height:1.7; padding-left:18px">
+      <li><strong>Toolbar icon</strong> — fill all inputs with fake data</li>
+      <li><strong>Right-click a page/field</strong> — fill all, fill this form, fill this input, fill &amp; submit, or fill with your profile</li>
+      <li><strong>Shortcuts</strong> — <code>Alt+Shift+F</code> fake fill, <code>Alt+Shift+D</code> profile fill (rebindable)</li>
+      <li><strong>General tab</strong> — your profile(s) + fake-data options</li>
+      <li><strong>Custom Fields tab</strong> — rules for specific fields (fixed, list, number, date, regex, lorem)</li>
+      <li><strong>Backup tab</strong> — export/import settings, or import from Fake Filler</li>
+    </ul>
+    <p style="font-size:13px; color:var(--muted)">Passwords are only filled in fake mode with a dummy value — real passwords are never stored. Profile mode never touches password fields.</p>
+    </section>
+  </div>
+
+  <div class="saved" id="saved">Saved ✓</div>
+  <script src="options.js"></script>
+</body>
+</html>
