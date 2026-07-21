@@ -1,0 +1,57 @@
+{
+  "name": "somshrestha-claude-account-switcher",
+  "displayName": "Claude Code Account Switcher",
+  "description": "Switch between multiple Claude Code accounts without re-signing in. Captures each logged-in account as a named profile and swaps credentials on demand.",
+  "version": "0.1.0",
+  "publisher": "somshrestha",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/som3669/claude-account-switcher"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "anthropic",
+    "account",
+    "switcher",
+    "login"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-account-switcher.switch",
+        "title": "Claude Account: Switch"
+      },
+      {
+        "command": "claude-account-switcher.capture",
+        "title": "Claude Account: Capture Current As Profile"
+      },
+      {
+        "command": "claude-account-switcher.manage",
+        "title": "Claude Account: Manage Profiles"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0",
+    "@vscode/vsce": "^2.0.0"
+  }
+}
