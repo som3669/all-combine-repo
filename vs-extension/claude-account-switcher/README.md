@@ -26,6 +26,22 @@ Commands:
 | `Claude Account: Capture Current As Profile` | Save the currently signed-in account |
 | `Claude Account: Manage Profiles` | Delete a saved profile |
 
+## Terminal switcher (no VS Code needed)
+
+`scripts/claude-switch.js` does the same swap from the command line — handy for CLI-only
+Claude Code use:
+
+```
+node claude-switch.js                    # interactive picker
+node claude-switch.js <name|email>       # switch directly
+node claude-switch.js --list             # profiles + current account
+node claude-switch.js --capture [name]   # save the current account as a profile
+```
+
+It uses Node's JSON parser (like the extension), so it tolerates the case-differing
+duplicate keys that can appear in `~/.claude.json`. Restart any running Claude Code
+sessions after switching so they pick up the new credentials.
+
 ## How switching stays valid
 
 Claude Code **rotates** the refresh token when it refreshes. Before switching away from an

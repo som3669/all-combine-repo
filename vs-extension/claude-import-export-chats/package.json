@@ -1,0 +1,164 @@
+{
+  "name": "somshrestha-claude-import-export-chats",
+  "displayName": "Claude Import Export Chats",
+  "description": "Export, import, back up, search, and organize your Claude Code conversations across multiple computers.",
+  "version": "0.0.1",
+  "publisher": "somshrestha",
+  "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/som3669/claude-import-export-chats"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Data Science"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "anthropic",
+    "chat",
+    "export",
+    "import",
+    "backup",
+    "conversation history"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claudeChats",
+          "title": "Claude Chats",
+          "icon": "media/sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudeChats": [
+        {
+          "id": "claudeChatsExplorer",
+          "name": "Conversations",
+          "icon": "media/sidebar.svg",
+          "contextualTitle": "Claude Chats"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "claudeChatsExplorer",
+        "contents": "No Claude Code conversations found.\nThis extension reads transcripts from your Claude home folder (~/.claude/projects).\n[Set Claude Home Folder](command:claudeChats.setClaudeHome)\n[Import a Backup](command:claudeChats.import)"
+      }
+    ],
+    "commands": [
+      { "command": "claudeChats.refresh", "title": "Claude Chats: Refresh", "icon": "$(refresh)" },
+      { "command": "claudeChats.search", "title": "Claude Chats: Search Conversations", "icon": "$(search)" },
+      { "command": "claudeChats.exportAll", "title": "Claude Chats: Export All Conversations", "icon": "$(cloud-download)" },
+      { "command": "claudeChats.exportProject", "title": "Claude Chats: Export This Project", "icon": "$(cloud-download)" },
+      { "command": "claudeChats.exportSession", "title": "Claude Chats: Download / Export Conversation", "icon": "$(cloud-download)" },
+      { "command": "claudeChats.import", "title": "Claude Chats: Import from Backup", "icon": "$(cloud-upload)" },
+      { "command": "claudeChats.backupAll", "title": "Claude Chats: Back Up All Now", "icon": "$(save-all)" },
+      { "command": "claudeChats.restoreBackup", "title": "Claude Chats: Restore from Backup Folder" },
+      { "command": "claudeChats.preview", "title": "Claude Chats: Open Conversation", "icon": "$(open-preview)" },
+      { "command": "claudeChats.copyAsMarkdown", "title": "Claude Chats: Copy Conversation as Markdown" },
+      { "command": "claudeChats.toggleFavorite", "title": "Claude Chats: Toggle Favorite", "icon": "$(star)" },
+      { "command": "claudeChats.rename", "title": "Claude Chats: Rename Conversation", "icon": "$(edit)" },
+      { "command": "claudeChats.editTags", "title": "Claude Chats: Edit Tags", "icon": "$(tag)" },
+      { "command": "claudeChats.revealTranscript", "title": "Claude Chats: Reveal Transcript File" },
+      { "command": "claudeChats.setClaudeHome", "title": "Claude Chats: Set Claude Home Folder" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "claudeChats.search", "when": "view == claudeChatsExplorer", "group": "navigation@1" },
+        { "command": "claudeChats.exportAll", "when": "view == claudeChatsExplorer", "group": "navigation@2" },
+        { "command": "claudeChats.import", "when": "view == claudeChatsExplorer", "group": "navigation@3" },
+        { "command": "claudeChats.refresh", "when": "view == claudeChatsExplorer", "group": "navigation@4" },
+        { "command": "claudeChats.backupAll", "when": "view == claudeChatsExplorer", "group": "1_backup" },
+        { "command": "claudeChats.restoreBackup", "when": "view == claudeChatsExplorer", "group": "1_backup" },
+        { "command": "claudeChats.setClaudeHome", "when": "view == claudeChatsExplorer", "group": "9_config" }
+      ],
+      "view/item/context": [
+        { "command": "claudeChats.preview", "when": "view == claudeChatsExplorer && viewItem == session", "group": "inline@1" },
+        { "command": "claudeChats.exportSession", "when": "view == claudeChatsExplorer && viewItem == session", "group": "inline@2" },
+        { "command": "claudeChats.toggleFavorite", "when": "view == claudeChatsExplorer && viewItem == session", "group": "inline@3" },
+        { "command": "claudeChats.copyAsMarkdown", "when": "view == claudeChatsExplorer && viewItem == session", "group": "1_actions@2" },
+        { "command": "claudeChats.rename", "when": "view == claudeChatsExplorer && viewItem == session", "group": "2_edit@1" },
+        { "command": "claudeChats.editTags", "when": "view == claudeChatsExplorer && viewItem == session", "group": "2_edit@2" },
+        { "command": "claudeChats.toggleFavorite", "when": "view == claudeChatsExplorer && viewItem == session", "group": "2_edit@3" },
+        { "command": "claudeChats.revealTranscript", "when": "view == claudeChatsExplorer && viewItem == session", "group": "3_reveal@1" },
+        { "command": "claudeChats.exportProject", "when": "view == claudeChatsExplorer && viewItem == project", "group": "inline@1" },
+        { "command": "claudeChats.exportProject", "when": "view == claudeChatsExplorer && viewItem == project", "group": "1_actions@1" }
+      ],
+      "commandPalette": [
+        { "command": "claudeChats.exportProject", "when": "false" },
+        { "command": "claudeChats.exportSession", "when": "false" },
+        { "command": "claudeChats.preview", "when": "false" },
+        { "command": "claudeChats.copyAsMarkdown", "when": "false" },
+        { "command": "claudeChats.toggleFavorite", "when": "false" },
+        { "command": "claudeChats.rename", "when": "false" },
+        { "command": "claudeChats.editTags", "when": "false" },
+        { "command": "claudeChats.revealTranscript", "when": "false" }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Import Export Chats",
+      "properties": {
+        "claudeChats.claudeHome": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the Claude home folder. Leave empty to auto-detect `~/.claude` (honors the `CLAUDE_CONFIG_DIR` environment variable)."
+        },
+        "claudeChats.exportFormat": {
+          "type": "string",
+          "enum": ["bundle", "markdown", "both"],
+          "enumDescriptions": [
+            "Portable .claudechats.json bundle (lossless, re-importable)",
+            "Human-readable Markdown files",
+            "Both a bundle and Markdown files"
+          ],
+          "default": "bundle",
+          "description": "Default format when exporting conversations."
+        },
+        "claudeChats.includeThinking": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include the assistant's internal thinking blocks in Markdown output."
+        },
+        "claudeChats.includeToolCalls": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include tool calls and tool results in Markdown output."
+        },
+        "claudeChats.backupDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Folder for `Back Up All Now`. Leave empty to use `<Claude home>/backups/chat-exports`."
+        },
+        "claudeChats.downloadDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Folder that downloaded/exported conversations are saved to. Leave empty to use `<Claude home>/downloads`. Set via the `Change folder…` prompt after a download."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.4.0",
+    "@vscode/vsce": "^2.24.0"
+  }
+}
