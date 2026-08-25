@@ -1,0 +1,2 @@
+# Local-only secrets for `wrangler dev`. Never commit the real file.
+POSTBACK_SECRET=change-me-long-random

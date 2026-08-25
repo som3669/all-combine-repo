@@ -14,6 +14,7 @@ import {
   backupBaseName,
   slug,
 } from './bundle';
+import { encodeProjectDir, prepareResume, transcriptExistsFor } from './resume';
 import { Session } from './model';
 
 const PREVIEW_SCHEME = 'claude-chat';
@@ -92,6 +93,13 @@ export function activate(context: vscode.ExtensionContext) {
     const md = sessionToMarkdown(store, s, optsFromConfig());
     await vscode.env.clipboard.writeText(md);
     vscode.window.showInformationMessage('Conversation copied as Markdown.');
+  });
+
+  // ---------- continue ----------
+  reg('claudeChats.continueChat', async (node?: Node) => {
+    const s = await pickSessionArg(store, treeView, node);
+    if (!s) return;
+    await continueFlow(store, s, refresh);
   });
 
   // ---------- export ----------
@@ -422,6 +430,108 @@ function resolveDownloadDir(store: ChatStore): string {
   return fallback;
 }
 
+/**
+ * Continue an existing conversation in Claude Code.
+ *
+ * `claude --resume <id>` only sees transcripts stored under the project folder
+ * encoded from the current working directory, so an imported conversation
+ * (whose paths come from another machine) is copied and rewritten for the
+ * folder chosen here before the CLI is launched.
+ */
+async function continueFlow(
+  store: ChatStore,
+  session: Session,
+  refresh: () => void
+): Promise<void> {
+  const targetCwd = await pickWorkingFolder(session);
+  if (!targetCwd) return;
+
+  const willCopy = encodeProjectDir(targetCwd) !== session.projectDir;
+  let newId = false;
+  if (willCopy && transcriptExistsFor(store, targetCwd, session.sessionId)) {
+    const reuse = 'Continue that copy';
+    const fresh = 'Make a separate copy';
+    const choice = await vscode.window.showQuickPick([reuse, fresh], {
+      placeHolder: 'This conversation was already prepared for that folder',
+    });
+    if (!choice) return;
+    newId = choice === fresh;
+  }
+
+  let prepared;
+  try {
+    prepared = prepareResume(store, session, targetCwd, { newId });
+  } catch (err: any) {
+    vscode.window.showErrorMessage(
+      `Could not prepare the conversation: ${err.message ?? err}`
+    );
+    return;
+  }
+
+  const cli =
+    vscode.workspace
+      .getConfiguration('claudeChats')
+      .get<string>('claudeCommand', 'claude')
+      ?.trim() || 'claude';
+
+  const term = vscode.window.createTerminal({
+    name: `Claude — ${session.title.slice(0, 40)}`,
+    cwd: targetCwd,
+  });
+  term.show();
+  term.sendText(`${cli} --resume ${prepared.sessionId}`);
+
+  if (prepared.relocated) {
+    vscode.window.showInformationMessage(
+      `Conversation prepared for ${targetCwd} and resumed in the terminal.`
+    );
+    refresh();
+  }
+}
+
+/** Choose the folder the conversation should continue in. */
+async function pickWorkingFolder(session: Session): Promise<string | undefined> {
+  interface Item extends vscode.QuickPickItem {
+    dir?: string;
+    browse?: boolean;
+  }
+  const items: Item[] = [];
+  const seen = new Set<string>();
+  const add = (dir: string, label: string, description: string) => {
+    const key = path.resolve(dir).toLowerCase();
+    if (seen.has(key)) return;
+    try {
+      if (!fs.statSync(dir).isDirectory()) return;
+    } catch {
+      return;
+    }
+    seen.add(key);
+    items.push({ label, description, detail: dir, dir });
+  };
+
+  add(session.cwd, '$(history) Original folder', 'where the chat was recorded');
+  for (const f of vscode.workspace.workspaceFolders ?? []) {
+    add(f.uri.fsPath, `$(root-folder) ${f.name}`, 'open workspace folder');
+  }
+  items.push({ label: '$(folder-opened) Browse…', description: 'pick another folder', browse: true });
+
+  const pick = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Continue this conversation in which folder?',
+    matchOnDetail: true,
+  });
+  if (!pick) return undefined;
+  if (!pick.browse) return pick.dir;
+
+  const picked = await vscode.window.showOpenDialog({
+    canSelectFolders: true,
+    canSelectFiles: false,
+    canSelectMany: false,
+    openLabel: 'Continue here',
+    defaultUri: safeDefaultUri(),
+  });
+  return picked?.[0]?.fsPath;
+}
+
 async function doImport(
   store: ChatStore,
   file: string,
@@ -446,15 +556,44 @@ async function doImport(
   );
   if (choice !== keepLabel && choice !== overwriteLabel) return;
 
+  let res;
   try {
-    const res = importBundle(store, bundle, choice === overwriteLabel);
-    vscode.window.showInformationMessage(
-      `Imported ${res.imported} new, overwrote ${res.overwritten}, skipped ${res.skipped}.`
-    );
+    res = importBundle(store, bundle, choice === overwriteLabel);
   } catch (err: any) {
     vscode.window.showErrorMessage(`Import failed: ${err.message ?? err}`);
+    refresh();
+    return;
   }
   refresh();
+
+  const ids = bundle.sessions.map((s) => s.sessionId);
+  const continueLabel = 'Continue a conversation';
+  const picked = await vscode.window.showInformationMessage(
+    `Imported ${res.imported} new, overwrote ${res.overwritten}, skipped ${res.skipped}.`,
+    continueLabel
+  );
+  if (picked !== continueLabel) return;
+
+  const imported = ids
+    .map((id) => store.findSession(id))
+    .filter((s): s is Session => !!s)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+  if (!imported.length) return;
+
+  const sel =
+    imported.length === 1
+      ? imported[0]
+      : (
+          await vscode.window.showQuickPick(
+            imported.map((s) => ({
+              label: s.title,
+              description: `${path.basename(s.cwd)} · ${s.messageCount} msg`,
+              s,
+            })),
+            { placeHolder: 'Select an imported conversation to continue', matchOnDescription: true }
+          )
+        )?.s;
+  if (sel) await continueFlow(store, sel, refresh);
 }
 
 async function searchFlow(

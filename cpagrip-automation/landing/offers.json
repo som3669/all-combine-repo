@@ -1,0 +1,6 @@
+{
+  "generated_at": null,
+  "filters": { "country": "US", "offer_type": "Email/Zip Submit", "min_payout": 0.5 },
+  "counts": { "fetched": 0, "matched": 0, "returned": 0 },
+  "offers": []
+}

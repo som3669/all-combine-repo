@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPAGrip Earnings — Live</title>
+<style>
+:root {
+  --bg:#f7f8fa; --surface:#fff; --ink:#16181d; --soft:#5b6270;
+  --line:#e3e6ec; --accent:#1f5fd0; --good:#12795a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#0f1116; --surface:#171a21; --ink:#eef0f4; --soft:#a2a9b8;
+          --line:#272c36; --accent:#6ea2ff; --good:#4fd1a5; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:20px;margin:0;letter-spacing:-.01em}
+h2{font-size:15px;margin:28px 0 10px;letter-spacing:-.01em}
+.soft{color:var(--soft);font-size:13px}
+.cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card .label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+.card .value{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:6px 0 2px;color:var(--good)}
+.card .sub{font-size:13px;color:var(--soft)}
+table{width:100%;border-collapse:collapse;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.spark{display:flex;align-items:flex-end;gap:3px;height:70px;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:12px}
+.spark div{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
+.dot{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--good);margin-right:6px}
+.dot.stale{background:#c9761b}
+.err{background:#fdecec;border:1px solid #f2bcbc;color:#8d1f1f;padding:10px 14px;border-radius:10px;margin-bottom:16px}
+@media (prefers-color-scheme: dark){.err{background:#2a1618;border-color:#5c2b2f;color:#f3b0b0}}
+.overflow{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>CPAGrip earnings &mdash; affiliate 107151</h1>
+    <span class="soft"><span class="dot" id="dot"></span><span id="updated">connecting…</span></span>
+  </header>
+
+  <div id="err" class="err" hidden></div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Today</div><div class="value" id="v-today">$0.00</div><div class="sub" id="s-today">0 conversions</div></div>
+    <div class="card"><div class="label">Last 7 days</div><div class="value" id="v-week">$0.00</div><div class="sub" id="s-week">0 conversions</div></div>
+    <div class="card"><div class="label">Last 30 days</div><div class="value" id="v-month">$0.00</div><div class="sub" id="s-month">0 conversions</div></div>
+    <div class="card"><div class="label">All time</div><div class="value" id="v-all">$0.00</div><div class="sub" id="s-all">0 conversions</div></div>
+  </div>
+
+  <h2>Daily earnings (30 days)</h2>
+  <div class="spark" id="spark"></div>
+
+  <h2>Top offers (30 days)</h2>
+  <div class="overflow">
+    <table>
+      <thead><tr><th>Offer</th><th>ID</th><th class="num">Conversions</th><th class="num">Earnings</th></tr></thead>
+      <tbody id="top"><tr><td colspan="4" class="soft">No conversions recorded yet.</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var STATS_URL = new URLSearchParams(location.search).get('api') || '/stats';
+  var POLL_MS = 60000;
+
+  function money(n) { return '$' + (Number(n) || 0).toFixed(2); }
+  function q(id) { return document.getElementById(id); }
+
+  function setCard(prefix, data) {
+    q('v-' + prefix).textContent = money(data.earnings);
+    q('s-' + prefix).textContent = (data.conversions || 0) + ' conversion' + (data.conversions === 1 ? '' : 's');
+  }
+
+  function drawSpark(byDay) {
+    var host = q('spark');
+    host.textContent = '';
+    var max = byDay.reduce(function (m, d) { return Math.max(m, d.payout); }, 0) || 1;
+    byDay.forEach(function (d) {
+      var bar = document.createElement('div');
+      bar.style.height = Math.max(2, (d.payout / max) * 100) + '%';
+      bar.title = d.date + ': ' + money(d.payout) + ' (' + d.count + ')';
+      host.appendChild(bar);
+    });
+  }
+
+  function drawTop(rows) {
+    var body = q('top');
+    body.textContent = '';
+    if (!rows.length) {
+      var tr = document.createElement('tr');
+      var td = document.createElement('td');
+      td.colSpan = 4; td.className = 'soft';
+      td.textContent = 'No conversions recorded yet.';
+      tr.appendChild(td); body.appendChild(tr);
+      return;
+    }
+    rows.forEach(function (r) {
+      var tr = document.createElement('tr');
+      [[r.title || '(untitled)', ''], [r.offer_id, ''], [String(r.count), 'num'], [money(r.payout), 'num']]
+        .forEach(function (cell) {
+          var td = document.createElement('td');
+          td.textContent = cell[0];
+          if (cell[1]) td.className = cell[1];
+          tr.appendChild(td);
+        });
+      body.appendChild(tr);
+    });
+  }
+
+  function load() {
+    fetch(STATS_URL, { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        q('err').hidden = true;
+        q('dot').className = 'dot';
+        setCard('today', d.today);
+        setCard('week', d.week);
+        setCard('month', d.month);
+        setCard('all', { earnings: d.all_time.earnings, conversions: d.all_time.conversions });
+        drawSpark(d.by_day || []);
+        drawTop(d.top_offers || []);
+        q('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+      })
+      .catch(function (e) {
+        q('dot').className = 'dot stale';
+        q('updated').textContent = 'stale';
+        var box = q('err');
+        box.hidden = false;
+        box.textContent = 'Could not reach ' + STATS_URL + ' (' + e.message + '). Retrying in 60s.';
+      });
+  }
+
+  load();
+  setInterval(load, POLL_MS);
+})();
+</script>
+</body>
+</html>

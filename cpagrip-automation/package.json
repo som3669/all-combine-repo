@@ -1,0 +1,15 @@
+{
+  "name": "cpagrip-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offer fetcher, unlock landing page, and postback dashboard for CPAGrip affiliate 107151",
+  "scripts": {
+    "fetch": "node fetcher/fetch_offers.js",
+    "serve": "node fetcher/serve_landing.js",
+    "test": "node fetcher/test/filter.test.js && node worker/test/smoke.mjs",
+    "deploy:worker": "npm --prefix worker run deploy"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
