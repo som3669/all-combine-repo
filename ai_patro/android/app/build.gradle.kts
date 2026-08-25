@@ -74,6 +74,15 @@ dependencies {
 }
 
 configurations.all {
+    // Huawei's ML Kit ships libHwDocRefine.so aligned to 4 KB, which fails
+    // Play's 16 KB memory page size requirement (every Flutter-produced .so is
+    // already 16 KB or 64 KB aligned). cunning_document_scanner only uses the
+    // Huawei scanner when com.huawei.hwid is installed -- see isHmsAvailable()
+    // -- which never holds on Play-distributed devices; those take the Google
+    // GmsDocumentScanner path. Dropping the dependency removes the unaligned
+    // library without affecting the scanner on any device Play serves.
+    exclude(group = "com.huawei.hms")
+
     resolutionStrategy {
         force("androidx.work:work-runtime:2.9.1")
         force("androidx.work:work-runtime-ktx:2.9.1")

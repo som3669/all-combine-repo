@@ -12,6 +12,9 @@ import * as transcriptApi from './analytics/transcript.js';
 import * as sentimentApi from './analytics/sentiment.js';
 import * as discoverApi from './analytics/discover.js';
 import * as monetizationApi from './analytics/monetization.js';
+import * as formatsApi from './analytics/formats.js';
+import * as requestsApi from './analytics/requests.js';
+import * as advisorApi from './analytics/advisor.js';
 import * as swipe from './store/swipe.js';
 import * as tracker from './store/tracker.js';
 import * as settings from './store/settings.js';
@@ -44,6 +47,40 @@ const handlers = {
   'video.monetized': ({ videoId }) => monetizationApi.detectVideo(videoId),
   'video.adBreaks': ({ videoId }) => monetizationApi.adBreaks(videoId),
   'video.chapters': ({ videoId }) => videoApi.chapters(videoId),
+
+  // ---- formats / requests ------------------------------------------------
+  // Formats need no network: they are maths over the video list the channel
+  // panel already fetched.
+  'channel.formats': async ({ channel, minCluster }) => {
+    const a = await channelApi.analytics(channel, { deep: false });
+    return {
+      channelId: a.channelId,
+      title: a.title,
+      ...formatsApi.clusters(a.videos, minCluster ? { minCluster } : {}),
+    };
+  },
+  'video.requests': ({ videoId, limit }) => requestsApi.forVideo(videoId, { limit }),
+  'channel.requests': async ({ channel, videoLimit }) => {
+    const a = await channelApi.analytics(channel, { deep: false });
+    return requestsApi.forChannel({ channelId: a.channelId, videos: a.videos, videoLimit });
+  },
+
+  /**
+   * Revenue advice. Formats are free (no network), so they are always included.
+   * Requests cost one comment fetch per video, so they are opt-in via
+   * withRequests — the advice is useful without them.
+   */
+  'channel.advice': async ({ channel, withRequests = false }) => {
+    const analytics = await channelApi.analytics(channel, { deep: true });
+    const formats = formatsApi.clusters(analytics.videos);
+    let requests = null;
+    if (withRequests) {
+      requests = await requestsApi
+        .forChannel({ channelId: analytics.channelId, videos: analytics.videos, videoLimit: 3 })
+        .catch(() => null);
+    }
+    return advisorApi.advise({ analytics, formats, requests });
+  },
 
   // ---- similar / discovery ----------------------------------------------
   'similar.channels': ({ channel, limit }) => similarApi.channels(channel, { limit }),

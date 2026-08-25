@@ -42,6 +42,16 @@ class Panchang {
       'Paksha: $pakshaEn, Tithi: $tithiEn, Nakshatra: $nakshatraEn, '
       'Yoga: $yogaEn, Karana: $karanaEn, Sunrise: $sunrise, Sunset: $sunset, '
       'Rahukaal: $rahuKaal';
+
+  /// Same facts in Nepali. Used to ground the AI explainer when the app is in
+  /// Nepali mode: given the English transliterations the model re-derives the
+  /// Devanagari terms itself and gets them wrong (rendering Dwadashi as
+  /// "अष्टमी", Purvashadha as "पुरा आशाढ"), contradicting the values shown on
+  /// screen. Handing it the exact Nepali strings removes that step.
+  String get summaryNe =>
+      'पक्ष: $pakshaNe, तिथि: $tithiNe, नक्षत्र: $nakshatraNe, '
+      'योग: $yogaNe, करण: $karanaNe, सूर्योदय: $sunrise, सूर्यास्त: $sunset, '
+      'राहुकाल: $rahuKaal';
 }
 
 /// Deterministic panchang computation.

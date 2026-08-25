@@ -33,10 +33,12 @@ class AppDrawer extends ConsumerWidget {
     return Drawer(
       child: Column(
         children: [
-          // Header
+          // Header — top padding follows the status bar inset (edge-to-edge),
+          // not a hardcoded guess.
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
+            padding: EdgeInsets.fromLTRB(
+                20, MediaQuery.paddingOf(context).top + 20, 20, 20),
             color: AppTheme.primary,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,7 +318,7 @@ class AppDrawer extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'AI Patro v1.2.0',
+              'AI Patro v1.2.3',
               style: TextStyle(fontSize: 11, color: Colors.grey[400]),
             ),
           ),
@@ -340,7 +342,7 @@ class AppDrawer extends ConsumerWidget {
     showAboutDialog(
       context: context,
       applicationName: 'AI Patro',
-      applicationVersion: '1.0.0',
+      applicationVersion: '1.2.3',
       applicationIcon: const Icon(Icons.calendar_month,
           color: AppTheme.primary, size: 40),
       children: [

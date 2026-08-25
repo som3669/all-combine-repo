@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+	AccessProof site pages, for the WordPress importer.
+
+	WordPress admin -> Tools -> Import -> WordPress -> Run Importer, upload this
+	file, assign the posts to yourself, and import.
+
+	Creates two pages: "AccessProof" and "AccessProof Pro" as its child, so the
+	second lives at /accessproof/pro/ and the cross-links between them resolve.
+-->
+<rss version="2.0"
+	xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+	<title>AccessProof</title>
+	<link>https://rcube.thulo.eu.org</link>
+	<description>Site pages for the AccessProof plugin</description>
+	<pubDate>Tue, 18 Aug 2026 08:31:15 GMT</pubDate>
+	<language>en-GB</language>
+	<wp:wxr_version>1.2</wp:wxr_version>
+	<wp:base_site_url>https://rcube.thulo.eu.org</wp:base_site_url>
+	<wp:base_blog_url>https://rcube.thulo.eu.org</wp:base_blog_url>
+	<wp:author>
+		<wp:author_id>1</wp:author_id>
+		<wp:author_login><![CDATA[admin]]></wp:author_login>
+		<wp:author_email><![CDATA[]]></wp:author_email>
+		<wp:author_display_name><![CDATA[admin]]></wp:author_display_name>
+		<wp:author_first_name><![CDATA[]]></wp:author_first_name>
+		<wp:author_last_name><![CDATA[]]></wp:author_last_name>
+	</wp:author>
+	<generator>https://rcube.thulo.eu.org/</generator>
+	<item>
+		<title><![CDATA[AccessProof]]></title>
+		<link>https://rcube.thulo.eu.org/accessproof/</link>
+		<pubDate>Tue, 18 Aug 2026 08:31:15 GMT</pubDate>
+		<dc:creator><![CDATA[admin]]></dc:creator>
+		<guid isPermaLink="false">https://rcube.thulo.eu.org/accessproof/</guid>
+		<description></description>
+		<content:encoded><![CDATA[<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">WooCommerce accessibility &middot; free plugin</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"3rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h1 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:3rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">AccessProof</h1>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.125rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.125rem;line-height:1.62">Scans a WooCommerce store against WCAG 2.1 AA, names the exact change to make in WooCommerce&rsquo;s own vocabulary, and keeps a dated record you can show. Runs in the administrator&rsquo;s browser; nothing leaves the site.</p>
+<!-- /wp:paragraph -->
+<!-- wp:buttons {"style":{"spacing":{"blockGap":"0.75rem","margin":{"top":"0.5rem"}}}} -->
+<div class="wp-block-buttons" style="margin-top:0.5rem">
+<!-- wp:button {"style":{"color":{"background":"#0f172a","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#0f172a"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="https://wordpress.org/plugins/accessproof/" style="border-color:#0f172a;border-width:1px;border-radius:4px;color:#ffffff;background-color:#0f172a;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Install free</a></div>
+<!-- /wp:button -->
+<!-- wp:button {"style":{"color":{"background":"#2b5f00","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#2b5f00"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="https://rcube.thulo.eu.org/accessproof/pro/" style="border-color:#2b5f00;border-width:1px;border-radius:4px;color:#ffffff;background-color:#2b5f00;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">What Pro adds</a></div>
+<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"2rem","left":"3rem"}}}} -->
+<div class="wp-block-columns">
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:image {"sizeSlug":"large","style":{"border":{"radius":"4px"}}} -->
+<figure class="wp-block-image size-large has-custom-border"><img src="https://rcube.thulo.eu.org/wp-content/uploads/accessproof-screenshot-1.png" alt="The AccessProof dashboard showing a score of 67 out of 100, counts of critical and serious failures, and a table of previous scans with their dates and scores." style="border-radius:4px"/></figure>
+<!-- /wp:image -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">The idea</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">The European Accessibility Act has applied since 28 June 2025, and the standard behind it &mdash; EN 301 549 &mdash; points at WCAG 2.1 Level AA. Two questions can now be put to a shop: is it accessible, and can you show what you did about it.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">Generic scanners answer neither well. They scan a homepage, report a CSS selector, and treat a checkout like a blog post. AccessProof scans the pages that carry the risk &mdash; with a product in the basket, so the real form markup is tested rather than an empty-cart notice &mdash; and writes every finding as an instruction rather than a rule name.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:column -->
+</div>
+<!-- /wp:columns -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">A finding, in full</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">The colour to paste, not a principle</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">&ldquo;Darken the text or lighten the background&rdquo; names no element, no colour and no target. AccessProof measures both colours, the ratio scored, the ratio required, and the nearest shade that passes.</p>
+<!-- /wp:paragraph -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"1rem","left":"1.5rem"}}}} -->
+<div class="wp-block-columns">
+<!-- wp:column {"width":"33.33%"} -->
+<div class="wp-block-column" style="flex-basis:33.33%">
+<!-- wp:group {"style":{"color":{"background":"#54830c"},"spacing":{"padding":{"top":"1.75rem","bottom":"1.75rem"}},"border":{"radius":"3px","width":"1px","color":"#d5e3c8"}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group has-background has-border-color" style="border-color:#d5e3c8;border-width:1px;border-radius:3px;background-color:#54830c;padding-top:1.75rem;padding-bottom:1.75rem"></div>
+<!-- /wp:group -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.85rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:0.85rem;line-height:1.62"><strong>Text</strong></p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.85rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.85rem;line-height:1.62"><code>#54830c</code></p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"33.33%"} -->
+<div class="wp-block-column" style="flex-basis:33.33%">
+<!-- wp:group {"style":{"color":{"background":"#eef7dd"},"spacing":{"padding":{"top":"1.75rem","bottom":"1.75rem"}},"border":{"radius":"3px","width":"1px","color":"#d5e3c8"}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group has-background has-border-color" style="border-color:#d5e3c8;border-width:1px;border-radius:3px;background-color:#eef7dd;padding-top:1.75rem;padding-bottom:1.75rem"></div>
+<!-- /wp:group -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.85rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:0.85rem;line-height:1.62"><strong>Background</strong></p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.85rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.85rem;line-height:1.62"><code>#eef7dd</code></p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"33.33%"} -->
+<div class="wp-block-column" style="flex-basis:33.33%">
+<!-- wp:group {"style":{"color":{"background":"#4f7b0b"},"spacing":{"padding":{"top":"1.75rem","bottom":"1.75rem"}},"border":{"radius":"3px","width":"1px","color":"#d5e3c8"}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group has-background has-border-color" style="border-color:#d5e3c8;border-width:1px;border-radius:3px;background-color:#4f7b0b;padding-top:1.75rem;padding-bottom:1.75rem"></div>
+<!-- /wp:group -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.85rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:0.85rem;line-height:1.62"><strong>Change text to</strong></p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.85rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.85rem;line-height:1.62"><code>#4f7b0b</code></p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:column -->
+</div>
+<!-- /wp:columns -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.95rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:0.95rem;line-height:1.62"><strong>Measured 4.1:1, needs 4.5:1.</strong> After the change: 4.6:1.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.95rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.95rem;line-height:1.62">Findings are then grouped by the colour pair behind them, because one colour is reused across a site. On a real store, five colour changes cleared fifty-five failing elements.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"2rem","left":"3rem"}}}} -->
+<div class="wp-block-columns">
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Which problems are actually yours</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">A scan reports plenty that is not your markup at all: WooCommerce&rsquo;s own block templates, a theme&rsquo;s mini-cart, WordPress core block output. On that same store, <strong>eight of seventeen findings were third-party code</strong>.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">Every finding carries its origin, and one checkbox narrows the list to work you can actually do. For the rest you get the advice that helps: report it upstream and record it as a known limitation, which is defensible in a way an unexplained failure is not.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:image {"sizeSlug":"large","style":{"border":{"radius":"4px"}}} -->
+<figure class="wp-block-image size-large has-custom-border"><img src="https://rcube.thulo.eu.org/wp-content/uploads/accessproof-screenshot-3.png" alt="Findings grouped by page, each row tagged with who can fix it — yours to fix, WooCommerce, or theme — alongside a filter that hides the ones you cannot change." style="border-radius:4px"/></figure>
+<!-- /wp:image -->
+</div>
+<!-- /wp:column -->
+</div>
+<!-- /wp:columns -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">What is in it</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">What the free plugin does</h2>
+<!-- /wp:heading -->
+<!-- wp:list {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"spacing":{"blockGap":"0.55rem"}}} -->
+<ul class="wp-block-list" style="font-size:1.0625rem;line-height:1.62">
+<!-- wp:list-item -->
+<li><strong>Risk-ordered scanning</strong> &mdash; home, shop, product, cart, checkout, account and blog, with cart and checkout tested with a product in the basket</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Findings in WooCommerce language</strong> &mdash; the component named, and the filter or setting to change, rather than a CSS selector</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Exact contrast fixes</strong> &mdash; both colours measured, the ratio required, and the nearest passing shade, grouped by colour pair</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Origin labelling</strong> &mdash; yours, your theme, WooCommerce, WordPress core, or an installed overlay, with a filter for what you can fix</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Overlay detection</strong> &mdash; finds accessiBe, UserWay, Ally, EqualWeb and AudioEye, and reports what the widget has and has not changed</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Purchase-path ranking</strong> &mdash; a failure that blocks a sale outranks the same failure on a marketing page</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Dated scan history</strong> &mdash; every scan with its score and severity counts, which is the record an auditor asks for</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>A How to use screen</strong> &mdash; what gets scanned, how to read severity, and plainly what automation cannot check</li>
+<!-- /wp:list-item -->
+</ul>
+<!-- /wp:list -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"2rem","left":"3rem"}}}} -->
+<div class="wp-block-columns">
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:image {"sizeSlug":"large","style":{"border":{"radius":"4px"}}} -->
+<figure class="wp-block-image size-large has-custom-border"><img src="https://rcube.thulo.eu.org/wp-content/uploads/accessproof-screenshot-4.png" alt="An expanded finding for the add-to-cart button showing the fix to make, the WCAG criterion, the measured colours with swatches, and the element HTML." style="border-radius:4px"/></figure>
+<!-- /wp:image -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Every finding opens</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">The WooCommerce-specific fix, the criterion it fails, the measured colours, the failing element&rsquo;s own markup, and a link to the technical reference. No working out which button a selector meant.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:column -->
+</div>
+<!-- /wp:columns -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Not an overlay</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Nothing is added for visitors</h2>
+<!-- /wp:heading -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"2rem","left":"3rem"}}}} -->
+<div class="wp-block-columns">
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":3,"style":{"typography":{"fontSize":"1.0625rem","fontFamily":"Inter, Figtree, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif","fontWeight":"650","lineHeight":"1.4","letterSpacing":"0"},"color":{"text":"#16232a"}}} -->
+<h3 class="wp-block-heading has-text-color" style="color:#16232a;font-family:Inter, Figtree, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;font-size:1.0625rem;font-weight:650;letter-spacing:0;line-height:1.4">What an overlay does</h3>
+<!-- /wp:heading -->
+<!-- wp:list {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"spacing":{"blockGap":"0.55rem"}}} -->
+<ul class="wp-block-list" style="font-size:1.0625rem;line-height:1.62">
+<!-- wp:list-item -->
+<li>Adds a floating button and a script from a third-party server.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Changes the page only for visitors who find that button and switch something on.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Leaves the markup a regulator or auditor tests exactly as it was.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>In January 2025 the US Federal Trade Commission fined one vendor <strong>$1,000,000</strong> for claiming otherwise.</li>
+<!-- /wp:list-item -->
+</ul>
+<!-- /wp:list -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":3,"style":{"typography":{"fontSize":"1.0625rem","fontFamily":"Inter, Figtree, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif","fontWeight":"650","lineHeight":"1.4","letterSpacing":"0"},"color":{"text":"#16232a"}}} -->
+<h3 class="wp-block-heading has-text-color" style="color:#16232a;font-family:Inter, Figtree, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;font-size:1.0625rem;font-weight:650;letter-spacing:0;line-height:1.4">What AccessProof does</h3>
+<!-- /wp:heading -->
+<!-- wp:list {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"spacing":{"blockGap":"0.55rem"}}} -->
+<ul class="wp-block-list" style="font-size:1.0625rem;line-height:1.62">
+<!-- wp:list-item -->
+<li>Finds the failures in your actual source markup.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Names where to change them, in WooCommerce&rsquo;s own vocabulary.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Adds nothing to the front end &mdash; visitors never load a byte of it.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Detects an installed overlay and reports what it has and has not fixed.</li>
+<!-- /wp:list-item -->
+</ul>
+<!-- /wp:list -->
+</div>
+<!-- /wp:column -->
+</div>
+<!-- /wp:columns -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.95rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.95rem;line-height:1.62">Measured on a store with an overlay running and its script loaded: the home page still failed thirteen contrast elements and a focus trap, and one further failure came from the widget itself. Those are attributed to the vendor, because you cannot edit markup a remote script generates.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Specification</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Specification</h2>
+<!-- /wp:heading -->
+<!-- wp:table {"className":"is-style-stripes","hasFixedLayout":false} -->
+<figure class="wp-block-table is-style-stripes"><table><tbody><tr><th scope="row">Standard tested</th><td>WCAG 2.1 Level AA, referenced by EN 301 549 and the European Accessibility Act</td></tr><tr><th scope="row">Rule engine</th><td>axe-core 4.13.0 by Deque Systems, Mozilla Public License 2.0, bundled unmodified</td></tr><tr><th scope="row">Pages scanned</th><td>Home, shop, product, cart, checkout, account, blog. No page limit.</td></tr><tr><th scope="row">Where it runs</th><td>The administrator&rsquo;s own browser. No outbound connections, no page content sent anywhere.</td></tr><tr><th scope="row">Front-end footprint</th><td>None. Nothing is enqueued for visitors.</td></tr><tr><th scope="row">Requires</th><td>WordPress 6.4 or later, PHP 7.4 or later. WooCommerce optional, but most of the value is there.</td></tr><tr><th scope="row">Coverage honesty</th><td>Automated testing reaches roughly a third of WCAG. Reading order, keyboard traps and meaningful alt text need a person, and the plugin says so.</td></tr><tr><th scope="row">Licence</th><td>GPL-2.0-or-later</td></tr></tbody></table><figcaption class="wp-element-caption">AccessProof, free plugin</figcaption></figure>
+<!-- /wp:table -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Questions</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Asked before installing</h2>
+<!-- /wp:heading -->
+<!-- wp:details {"summary":"Does this make my store legally compliant?"} -->
+<details class="wp-block-details"><summary>Does this make my store legally compliant?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">No tool can promise that, and you should distrust any that does. It finds the machine-detectable failures, tells you how to fix them, and records what you did.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Does it slow my site down?"} -->
+<details class="wp-block-details"><summary>Does it slow my site down?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">No. Nothing is added to the front end for visitors. The scan runs only when you click the button, in your own browser.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Where does my scan data go?"} -->
+<details class="wp-block-details"><summary>Where does my scan data go?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">Your own database. The plugin makes no outbound connections at all, and page content is never sent anywhere.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Does it work without WooCommerce?"} -->
+<details class="wp-block-details"><summary>Does it work without WooCommerce?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">Yes, but the store-specific checks are skipped and you lose most of the value.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#0f172a","text":"#e8ecf1"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background has-text-color" style="background-color:#0f172a;color:#e8ecf1;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#9ede6a"}}} -->
+<p class="has-text-color" style="color:#9ede6a;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Get started</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#ffffff"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#ffffff;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Scan your store in about a minute</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#e8ecf1"}}} -->
+<p class="has-text-color" style="color:#e8ecf1;font-size:1.0625rem;line-height:1.62">Install it, click Scan my store, read the list. Free, no account, nothing leaving your site.</p>
+<!-- /wp:paragraph -->
+<!-- wp:buttons {"style":{"spacing":{"blockGap":"0.75rem","margin":{"top":"0.5rem"}}}} -->
+<div class="wp-block-buttons" style="margin-top:0.5rem">
+<!-- wp:button {"style":{"color":{"background":"#2b5f00","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#ffffff"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="https://wordpress.org/plugins/accessproof/" style="border-color:#ffffff;border-width:1px;border-radius:4px;color:#ffffff;background-color:#2b5f00;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Install free</a></div>
+<!-- /wp:button -->
+<!-- wp:button {"style":{"color":{"background":"#3a4a63","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#ffffff"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="https://rcube.thulo.eu.org/accessproof/pro/" style="border-color:#ffffff;border-width:1px;border-radius:4px;color:#ffffff;background-color:#3a4a63;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">What Pro adds</a></div>
+<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->
+</div>
+<!-- /wp:group -->]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>4001</wp:post_id>
+		<wp:post_date><![CDATA[2026-08-18 08:31:15]]></wp:post_date>
+		<wp:post_date_gmt><![CDATA[2026-08-18 08:31:15]]></wp:post_date_gmt>
+		<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+		<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+		<wp:post_name><![CDATA[accessproof]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>0</wp:menu_order>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+		<wp:post_password><![CDATA[]]></wp:post_password>
+		<wp:is_sticky>0</wp:is_sticky>
+	</item>
+	<item>
+		<title><![CDATA[AccessProof Pro]]></title>
+		<link>https://rcube.thulo.eu.org/accessproof/pro/</link>
+		<pubDate>Tue, 18 Aug 2026 08:31:15 GMT</pubDate>
+		<dc:creator><![CDATA[admin]]></dc:creator>
+		<guid isPermaLink="false">https://rcube.thulo.eu.org/accessproof/pro/</guid>
+		<description></description>
+		<content:encoded><![CDATA[<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Add-on &middot; licence key</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":1,"style":{"typography":{"fontSize":"3rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h1 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:3rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">AccessProof Pro</h1>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.125rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.125rem;line-height:1.62">Free finds the problems. Pro tests the buying process: it submits your checkout empty to see whether the errors are announced, checks a customer can buy using only a keyboard, watches every week, and turns the record into a document you can hand to a client.</p>
+<!-- /wp:paragraph -->
+<!-- wp:buttons {"style":{"spacing":{"blockGap":"0.75rem","margin":{"top":"0.5rem"}}}} -->
+<div class="wp-block-buttons" style="margin-top:0.5rem">
+<!-- wp:button {"style":{"color":{"background":"#0f172a","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#0f172a"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="#pricing" style="border-color:#0f172a;border-width:1px;border-radius:4px;color:#ffffff;background-color:#0f172a;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">See pricing</a></div>
+<!-- /wp:button -->
+<!-- wp:button {"style":{"color":{"background":"#2b5f00","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#2b5f00"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="https://rcube.thulo.eu.org/accessproof/" style="border-color:#2b5f00;border-width:1px;border-radius:4px;color:#ffffff;background-color:#2b5f00;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Start with the free plugin</a></div>
+<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">The idea</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Some criteria only exist after a click</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">WCAG 3.3.1 and 3.3.3 describe error messages that must be announced, marked on the failing field, and specific enough to act on. Those states do not exist until a customer submits a form &mdash; so no static scan reaches them, at any price, however many rules it ships.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">Because the scan drives a real browser, Pro can perform the interaction first and then check the result. That is the difference between testing a shop and scanning a page, and it is the reason this add-on exists.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.95rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.95rem;line-height:1.62"><strong>No order is ever created.</strong> The checkout is emptied before submission and the emptiness is then verified; if any required field still holds a value, the check aborts rather than clicking Place Order.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Before you pay</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">What the free plugin already does</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">So you know exactly what you are buying: every page type scanned with no limit, findings written in WooCommerce terms, exact replacement colours for contrast failures, origin labelling so third-party defects are not blamed on you, overlay detection, and a dated scan history.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">That is enough to find and fix a store. Pro is for the part after that.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">What is in it</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">What Pro adds</h2>
+<!-- /wp:heading -->
+<!-- wp:list {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"spacing":{"blockGap":"0.55rem"}}} -->
+<ul class="wp-block-list" style="font-size:1.0625rem;line-height:1.62">
+<!-- wp:list-item -->
+<li><strong>Checkout error testing</strong> &mdash; submits the form empty and checks the errors are announced to a screen reader, marked on the failing fields, linked to them, and specific enough to act on</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Keyboard purchase path</strong> &mdash; add to cart, proceed to checkout and place order each reachable and operable with no mouse, with focus visibly obvious</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Add-to-cart feedback</strong> &mdash; whether adding a product from the keyboard tells the customer it worked</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Full-store coverage</strong> &mdash; up to 50 products, categories, pages and posts each, with products sampled across categories rather than by date</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Template grouping</strong> &mdash; the same missing label on 400 product pages is one theme fix, and the report leads with whichever fix repairs the most pages</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Scheduled scans</strong> &mdash; daily, weekly or monthly, with an email when something gets worse</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Scan comparison</strong> &mdash; fixed, newly detected and unchanged since last time, because regressions arrive through updates rather than anything you did</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>A dated audit report</strong> &mdash; standard tested, tool versions, priority fixes, findings by page, exclusions with reasons, testing history, signature block; print-optimised for PDF</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>An accessibility statement</strong> &mdash; published following the EU model structure, its known-limitations section built from your latest scan so it stays true</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>An ignore log</strong> &mdash; record findings you assessed and chose not to act on, with a mandatory reason, printed in the report</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li><strong>Bulk alt text</strong> &mdash; every image missing alt text in one screen, with the page it is attached to as a hint; nothing written for you</li>
+<!-- /wp:list-item -->
+</ul>
+<!-- /wp:list -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Honesty</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">What it is not</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">The audit report is a <strong>self-evaluation using automated testing</strong>, and it says so on its own face. That is real evidence of diligence, and it is usually what a client or an insurer wants to see.</p>
+<!-- /wp:paragraph -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62">It is <strong>not</strong> an independent audit and not a conformance certificate. If you need one of those you need a qualified human evaluator, and no plugin at any price changes that. Automated testing reaches about a third of WCAG; Pro reaches more of it than free does, and documents the rest.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Pricing</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">One store, or twenty-five</h2>
+<!-- /wp:heading -->
+<!-- wp:columns {"style":{"spacing":{"blockGap":{"top":"2rem","left":"3rem"}}}} -->
+<div class="wp-block-columns">
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":3,"style":{"typography":{"fontSize":"1.0625rem","fontFamily":"Inter, Figtree, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif","fontWeight":"650","lineHeight":"1.4","letterSpacing":"0"},"color":{"text":"#16232a"}}} -->
+<h3 class="wp-block-heading has-text-color" style="color:#16232a;font-family:Inter, Figtree, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;font-size:1.0625rem;font-weight:650;letter-spacing:0;line-height:1.4">Single store</h3>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62"><strong style="font-size:1.9rem">TODO</strong> per year, 1 site</p>
+<!-- /wp:paragraph -->
+<!-- wp:list {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"spacing":{"blockGap":"0.55rem"}}} -->
+<ul class="wp-block-list" style="font-size:1.0625rem;line-height:1.62">
+<!-- wp:list-item -->
+<li>Everything on this page</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>One year of updates</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Email support</li>
+<!-- /wp:list-item -->
+</ul>
+<!-- /wp:list -->
+<!-- wp:buttons {"style":{"spacing":{"blockGap":"0.75rem","margin":{"top":"0.5rem"}}}} -->
+<div class="wp-block-buttons" style="margin-top:0.5rem">
+<!-- wp:button {"style":{"color":{"background":"#2b5f00","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#2b5f00"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="#buy" style="border-color:#2b5f00;border-width:1px;border-radius:4px;color:#ffffff;background-color:#2b5f00;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Buy for one store</a></div>
+<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->
+</div>
+<!-- /wp:column -->
+<!-- wp:column {"width":"50%"} -->
+<div class="wp-block-column" style="flex-basis:50%">
+<!-- wp:heading {"level":3,"style":{"typography":{"fontSize":"1.0625rem","fontFamily":"Inter, Figtree, -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif","fontWeight":"650","lineHeight":"1.4","letterSpacing":"0"},"color":{"text":"#16232a"}}} -->
+<h3 class="wp-block-heading has-text-color" style="color:#16232a;font-family:Inter, Figtree, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;font-size:1.0625rem;font-weight:650;letter-spacing:0;line-height:1.4">Agency &mdash; 25 sites</h3>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#2f3b40"}}} -->
+<p class="has-text-color" style="color:#2f3b40;font-size:1.0625rem;line-height:1.62"><strong style="font-size:1.9rem">TODO</strong> per year, 25 sites</p>
+<!-- /wp:paragraph -->
+<!-- wp:list {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"spacing":{"blockGap":"0.55rem"}}} -->
+<ul class="wp-block-list" style="font-size:1.0625rem;line-height:1.62">
+<!-- wp:list-item -->
+<li>Everything on this page, across 25 client sites</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>A report per client, from each site&rsquo;s own dashboard</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>One year of updates and priority support</li>
+<!-- /wp:list-item -->
+</ul>
+<!-- /wp:list -->
+<!-- wp:buttons {"style":{"spacing":{"blockGap":"0.75rem","margin":{"top":"0.5rem"}}}} -->
+<div class="wp-block-buttons" style="margin-top:0.5rem">
+<!-- wp:button {"style":{"color":{"background":"#0f172a","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#0f172a"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="#buy" style="border-color:#0f172a;border-width:1px;border-radius:4px;color:#ffffff;background-color:#0f172a;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Buy for 25 sites</a></div>
+<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->
+</div>
+<!-- /wp:column -->
+</div>
+<!-- /wp:columns -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.95rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:0.95rem;line-height:1.62">Licences move between sites &mdash; deactivate on the old one to free the seat. Your scan history, ignore log and settings stay on your server whether the licence is active or not.</p>
+<!-- /wp:paragraph -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#edfbe2"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#edfbe2;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Specification</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Specification</h2>
+<!-- /wp:heading -->
+<!-- wp:table {"className":"is-style-stripes","hasFixedLayout":false} -->
+<figure class="wp-block-table is-style-stripes"><table><tbody><tr><th scope="row">Requires</th><td>The free AccessProof plugin, WordPress 6.4 or later, PHP 7.4 or later</td></tr><tr><th scope="row">Coverage</th><td>Up to 50 products, categories, pages and posts each, sampled across categories</td></tr><tr><th scope="row">Interaction tests</th><td>Checkout error handling, keyboard purchase path, add-to-cart announcement</td></tr><tr><th scope="row">Order safety</th><td>No order can be created; the checkout is verified empty before submission or the check aborts</td></tr><tr><th scope="row">Scheduling</th><td>Daily, weekly or monthly, with regression email</td></tr><tr><th scope="row">Documents</th><td>Dated audit report for print or PDF, EU-model accessibility statement, ignore log with reasons</td></tr><tr><th scope="row">Compatibility</th><td>Checked against an extension API version rather than matching version numbers; pauses with a notice instead of failing</td></tr><tr><th scope="row">On expiry</th><td>Paid features stop unlocking. Scan history, ignore log and settings are left untouched.</td></tr><tr><th scope="row">Distribution</th><td>Not on WordPress.org. Licence key, one year of updates.</td></tr></tbody></table><figcaption class="wp-element-caption">AccessProof Pro add-on</figcaption></figure>
+<!-- /wp:table -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background" style="background-color:#ffffff;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#377a00"}}} -->
+<p class="has-text-color" style="color:#377a00;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Questions</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#16232a"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#16232a;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Asked before buying</h2>
+<!-- /wp:heading -->
+<!-- wp:details {"summary":"What happens when my licence expires?"} -->
+<details class="wp-block-details"><summary>What happens when my licence expires?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">Paid features stop unlocking. Your scan history, ignore log and settings are left completely alone &mdash; that record is your evidence and it stays yours.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Does it replace the free plugin?"} -->
+<details class="wp-block-details"><summary>Does it replace the free plugin?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">No, it requires it. The free plugin owns the scanner and the database; Pro extends it through documented hooks.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Will the checkout test create test orders?"} -->
+<details class="wp-block-details"><summary>Will the checkout test create test orders?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">No. The form is emptied and the emptiness verified before anything is submitted; if a required field still holds a value the check aborts rather than placing an order.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Will it break when the free plugin updates?"} -->
+<details class="wp-block-details"><summary>Will it break when the free plugin updates?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">The two update independently and are checked against an extension API version rather than matching version numbers. If they are ever incompatible, Pro pauses with an admin notice rather than causing a fatal error.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+<!-- wp:details {"summary":"Do you offer refunds?"} -->
+<details class="wp-block-details"><summary>Do you offer refunds?</summary>
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#55646b"}}} -->
+<p class="has-text-color" style="color:#55646b;font-size:1.0625rem;line-height:1.62">TODO &mdash; 30 days is the norm in this market.</p>
+<!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->
+</div>
+<!-- /wp:group -->
+
+<!-- wp:group {"align":"full","style":{"color":{"background":"#0f172a","text":"#e8ecf1"},"spacing":{"padding":{"top":"4.5rem","bottom":"4.5rem","left":"1.5rem","right":"1.5rem"},"blockGap":"1.15rem"}},"layout":{"type":"constrained","contentSize":"68rem"}} -->
+<div class="wp-block-group alignfull has-background has-text-color" style="background-color:#0f172a;color:#e8ecf1;padding-top:4.5rem;padding-right:1.5rem;padding-bottom:4.5rem;padding-left:1.5rem">
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"0.75rem","fontWeight":"700","letterSpacing":"0.12em","textTransform":"uppercase","lineHeight":"1.4"},"color":{"text":"#9ede6a"}}} -->
+<p class="has-text-color" style="color:#9ede6a;font-size:0.75rem;font-weight:700;letter-spacing:0.12em;line-height:1.4;text-transform:uppercase">Get started</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2,"style":{"typography":{"fontSize":"2rem","fontFamily":"\"IBM Plex Serif\", \"Iowan Old Style\", Palatino, Georgia, serif","fontWeight":"600","lineHeight":"1.12","letterSpacing":"-0.02em"},"color":{"text":"#ffffff"}}} -->
+<h2 class="wp-block-heading has-text-color" style="color:#ffffff;font-family:&quot;IBM Plex Serif&quot;, &quot;Iowan Old Style&quot;, Palatino, Georgia, serif;font-size:2rem;font-weight:600;letter-spacing:-0.02em;line-height:1.12">Start free, add Pro when someone asks for the paperwork</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph {"style":{"typography":{"fontSize":"1.0625rem","lineHeight":"1.62"},"color":{"text":"#e8ecf1"}}} -->
+<p class="has-text-color" style="color:#e8ecf1;font-size:1.0625rem;line-height:1.62">The free plugin finds and fixes. Pro tests the checkout, watches for regressions, and produces the document.</p>
+<!-- /wp:paragraph -->
+<!-- wp:buttons {"style":{"spacing":{"blockGap":"0.75rem","margin":{"top":"0.5rem"}}}} -->
+<div class="wp-block-buttons" style="margin-top:0.5rem">
+<!-- wp:button {"style":{"color":{"background":"#2b5f00","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#ffffff"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="#buy" style="border-color:#ffffff;border-width:1px;border-radius:4px;color:#ffffff;background-color:#2b5f00;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Buy a licence</a></div>
+<!-- /wp:button -->
+<!-- wp:button {"style":{"color":{"background":"#3a4a63","text":"#ffffff"},"border":{"radius":"4px","width":"1px","color":"#ffffff"},"typography":{"fontSize":"0.8125rem","fontWeight":"600","letterSpacing":"0.08em","textTransform":"uppercase"},"spacing":{"padding":{"top":"0.85rem","bottom":"0.85rem","left":"1.4rem","right":"1.4rem"}}}} -->
+<div class="wp-block-button"><a class="wp-block-button__link has-text-color has-background has-border-color has-custom-font-size wp-element-button" href="https://rcube.thulo.eu.org/accessproof/" style="border-color:#ffffff;border-width:1px;border-radius:4px;color:#ffffff;background-color:#3a4a63;padding-top:0.85rem;padding-right:1.4rem;padding-bottom:0.85rem;padding-left:1.4rem;font-size:0.8125rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Get the free plugin first</a></div>
+<!-- /wp:button -->
+</div>
+<!-- /wp:buttons -->
+</div>
+<!-- /wp:group -->]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>4002</wp:post_id>
+		<wp:post_date><![CDATA[2026-08-18 08:31:15]]></wp:post_date>
+		<wp:post_date_gmt><![CDATA[2026-08-18 08:31:15]]></wp:post_date_gmt>
+		<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+		<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+		<wp:post_name><![CDATA[pro]]></wp:post_name>
+		<wp:status><![CDATA[publish]]></wp:status>
+		<wp:post_parent>4001</wp:post_parent>
+		<wp:menu_order>1</wp:menu_order>
+		<wp:post_type><![CDATA[page]]></wp:post_type>
+		<wp:post_password><![CDATA[]]></wp:post_password>
+		<wp:is_sticky>0</wp:is_sticky>
+	</item>
+</channel>
+</rss>

@@ -19,6 +19,17 @@
 # Riverpod / Dart reflection
 -keep class com.aipatro.** { *; }
 
+# cunning_document_scanner pulls in Huawei HMS ML Kit
+# (com.huawei.hms:ml-computer-vision-documentskew), whose networking layer
+# optionally links against Huawei system classes, HiAnalytics, Cronet,
+# Conscrypt and BouncyCastle. None of those ship with the app -- HMS resolves
+# them at runtime on Huawei devices only -- so R8 must not fail on them.
+-dontwarn com.huawei.**
+-dontwarn com.android.org.conscrypt.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.chromium.net.**
+
 # Keep line numbers for crash reports
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile

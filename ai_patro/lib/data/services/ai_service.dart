@@ -7,7 +7,7 @@ import '../../core/constants/api_keys.dart';
 /// Docs: https://console.groq.com/docs/openai
 class AiService {
   static const _url = 'https://api.groq.com/openai/v1/chat/completions';
-  static const _model = 'llama-3.3-70b-versatile';
+  static const _model = 'openai/gpt-oss-120b';
   static const _prefsKey = 'groq_api_key';
 
   /// Key entered by the user at runtime (takes priority over the compile-time
@@ -49,6 +49,25 @@ class AiService {
   /// message: e.g. "No internet", "Invalid API key (401)", "Model not found".
   static String? lastError;
 
+  /// Appended to the first system message. Reasoning models default to
+  /// markdown tables, headings and emoji, which the app's plain Text widgets
+  /// render literally -- and they drift into English unless held to the
+  /// language the caller asked for.
+  static const _styleRules =
+      ' Formatting rules: reply in plain prose only. No markdown, tables, '
+      'headings, bullet lists or emoji. Obey the requested language and word '
+      'limit exactly. Do not show your reasoning.';
+
+  static List<Map<String, String>> _withStyleRules(
+      List<Map<String, String>> messages) {
+    final out = [...messages];
+    final i = out.indexWhere((m) => m['role'] == 'system');
+    if (i >= 0) {
+      out[i] = {...out[i], 'content': '${out[i]['content']}$_styleRules'};
+    }
+    return out;
+  }
+
   /// Multi-turn chat. [messages] is a list of {role, content} maps
   /// (role = system | user | assistant). Returns null on failure.
   static Future<String?> chat(
@@ -70,8 +89,13 @@ class AiService {
             },
             body: jsonEncode({
               'model': _model,
-              'messages': messages,
-              'max_tokens': maxTokens,
+              'messages': _withStyleRules(messages),
+              // gpt-oss reasons before it answers. Cap the reasoning, keep it
+              // out of the reply, and leave headroom on top of the caller's
+              // budget -- otherwise reasoning eats it and content is empty.
+              'reasoning_effort': 'low',
+              'reasoning_format': 'hidden',
+              'max_tokens': maxTokens + 300,
               'temperature': temperature,
             }),
           )
