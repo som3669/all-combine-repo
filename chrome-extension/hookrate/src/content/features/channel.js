@@ -156,6 +156,144 @@
     }
   }
 
+  /**
+   * Formats: which title patterns and lengths beat the channel's own median.
+   * A per-video outlier tells you a video worked; this tells you what to make
+   * next, which is the question people actually have.
+   */
+  async function showFormats(a) {
+    const modal = HR.ui.modal({ title: `Formats — ${a.title}`, width: 820 });
+    modal.body.append(HR.ui.skeleton(4, 'Clustering titles…'));
+
+    try {
+      const res = await HR.send('channel.formats', { channel: a.channelId });
+
+      const section = (kind, data) => {
+        if (!data || !data.sampled) return null;
+
+        const formatRows = data.formats.length
+          ? data.formats.map((f) =>
+              el('div.hr-row', {}, [
+                el('div.hr-row-main', {}, [
+                  el('div.hr-row-title', { text: f.label }),
+                  el('div.hr-row-meta', {
+                    text:
+                      `${f.count} videos · median ${HR.fmt.n(f.medianViews)}` +
+                      (f.avgDurationSec ? ` · avg ${HR.fmt.duration(f.avgDurationSec)}` : ''),
+                  }),
+                  f.best
+                    ? el('a.hr-row-sub', {
+                        href: `/watch?v=${f.best.videoId}`,
+                        text: `best: ${HR.fmt.n(f.best.views)} — ${f.best.title.slice(0, 70)}`,
+                      })
+                    : null,
+                ]),
+                el('div.hr-row-side', {}, [
+                  el('span', {
+                    class: `hr-chip hr-tier-${
+                      f.lift >= 2.5 ? 'outlier' : f.lift >= 1.5 ? 'above' : f.lift < 0.75 ? 'under' : 'normal'
+                    }`,
+                    text: `${f.lift}x`,
+                    title: `median of this format ÷ channel median (${HR.fmt.n(data.baseline)})`,
+                  }),
+                ]),
+              ])
+            )
+          : [
+              el('div.hr-empty', {
+                text: 'No repeating title pattern reached 3 videos — the titles are too varied to cluster, which is itself a finding.',
+              }),
+            ];
+
+        return el('div.hr-subsection', {}, [
+          el('div.hr-subsection-title', { text: `${kind} · median ${HR.fmt.n(data.baseline)}` }),
+          ...formatRows,
+          data.bands.length
+            ? el('div.hr-subsection', {}, [
+                el('div.hr-subsection-title', { text: 'By length' }),
+                ...data.bands.map((b) =>
+                  el('div.hr-row', {}, [
+                    el('div.hr-row-main', {}, [
+                      el('div.hr-row-title', { text: b.label }),
+                      el('div.hr-row-meta', {
+                        text: `${b.count} videos · median ${HR.fmt.n(b.medianViews)}`,
+                      }),
+                    ]),
+                    el('div.hr-row-side', {}, [HR.ui.chip(`${b.lift}x`, 'muted')]),
+                  ])
+                ),
+              ])
+            : null,
+          data.template && data.template.length
+            ? el('div.hr-note', {
+                text:
+                  'Title template (branding, excluded from clustering): ' +
+                  data.template.map((t) => `"${t.segment}" ${t.count}/${data.sampled}`).join(' · '),
+              })
+            : null,
+          data.unclustered
+            ? el('div.hr-note', { text: `${data.unclustered} videos fit no repeating pattern.` })
+            : null,
+        ]);
+      };
+
+      modal.body.replaceChildren(
+        el('div.hr-note', {
+          text: 'Lift = the format’s median views ÷ the channel’s median. Repeated title segments are detected as branding and removed first, so clusters describe the hook rather than the show name.',
+        }),
+        section('Long-form', res.longForm),
+        section('Shorts', res.shorts),
+        res.note ? el('div.hr-note.hr-muted', { text: res.note }) : null
+      );
+    } catch (err) {
+      modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+    }
+  }
+
+  /**
+   * Requests mined from comments: what viewers are asking for, ranked by how
+   * many asked and how many agreed.
+   */
+  async function showRequests(a) {
+    const modal = HR.ui.modal({ title: `Viewer requests — ${a.title}`, width: 780 });
+    modal.body.append(
+      HR.ui.skeleton(5, 'Reading comments on the top videos… (one fetch each)')
+    );
+
+    try {
+      const res = await HR.send('channel.requests', { channel: a.channelId, videoLimit: 5 });
+
+      modal.body.replaceChildren(
+        el('div.hr-note', {
+          text:
+            `${res.requestsFound} requests across ${res.videosScanned} videos. ` +
+            'Ranked by how many people asked, weighted by likes on those comments — so ten separate askers outrank one popular comment.',
+        }),
+        ...(res.grouped.length
+          ? res.grouped.map((g) =>
+              el('div.hr-row', {}, [
+                el('div.hr-row-main', {}, [
+                  el('div.hr-row-title', { text: g.key || '(unlabelled)' }),
+                  el('div.hr-row-meta', {
+                    text: `${g.count}× asked · ${HR.fmt.n(g.likes)} likes · ${g.kind}`,
+                  }),
+                  ...g.examples.map((ex) =>
+                    el('div.hr-comment', {}, [
+                      el('div.hr-comment-head', { text: `${ex.author} · ${HR.fmt.n(ex.likes)} likes` }),
+                      el('div.hr-comment-text', { text: ex.comment }),
+                    ])
+                  ),
+                ]),
+                el('div.hr-row-side', {}, [HR.ui.chip(`demand ${g.demand}`, 'good')]),
+              ])
+            )
+          : [el('div.hr-empty', { text: 'No requests matched. Comments may be disabled, or simply not asking for anything.' })])
+      );
+    } catch (err) {
+      modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+    }
+  }
+
   async function showSimilar(a) {
     const modal = HR.ui.modal({ title: `Similar channels — ${a.title}` });
     modal.body.append(HR.ui.skeleton(5, 'Searching…'));
@@ -251,6 +389,12 @@
 
     return [
       HR.ui.button('Outliers', () => showOutliers(a)),
+      HR.ui.button('Formats', () => showFormats(a), {
+        title: 'Which title patterns and lengths beat this channel’s median',
+      }),
+      HR.ui.button('Requests', () => showRequests(a), {
+        title: 'Mine viewer requests from comments on the top videos',
+      }),
       HR.ui.button('Similar', () => showSimilar(a)),
       trackBtn,
       HR.ui.button('Save', () =>

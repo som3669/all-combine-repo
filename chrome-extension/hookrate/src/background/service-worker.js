@@ -12,6 +12,8 @@ import * as transcriptApi from './analytics/transcript.js';
 import * as sentimentApi from './analytics/sentiment.js';
 import * as discoverApi from './analytics/discover.js';
 import * as monetizationApi from './analytics/monetization.js';
+import * as formatsApi from './analytics/formats.js';
+import * as requestsApi from './analytics/requests.js';
 import * as swipe from './store/swipe.js';
 import * as tracker from './store/tracker.js';
 import * as settings from './store/settings.js';
@@ -44,6 +46,23 @@ const handlers = {
   'video.monetized': ({ videoId }) => monetizationApi.detectVideo(videoId),
   'video.adBreaks': ({ videoId }) => monetizationApi.adBreaks(videoId),
   'video.chapters': ({ videoId }) => videoApi.chapters(videoId),
+
+  // ---- formats / requests ------------------------------------------------
+  // Formats need no network: they are maths over the video list the channel
+  // panel already fetched.
+  'channel.formats': async ({ channel, minCluster }) => {
+    const a = await channelApi.analytics(channel, { deep: false });
+    return {
+      channelId: a.channelId,
+      title: a.title,
+      ...formatsApi.clusters(a.videos, minCluster ? { minCluster } : {}),
+    };
+  },
+  'video.requests': ({ videoId, limit }) => requestsApi.forVideo(videoId, { limit }),
+  'channel.requests': async ({ channel, videoLimit }) => {
+    const a = await channelApi.analytics(channel, { deep: false });
+    return requestsApi.forChannel({ channelId: a.channelId, videos: a.videos, videoLimit });
+  },
 
   // ---- similar / discovery ----------------------------------------------
   'similar.channels': ({ channel, limit }) => similarApi.channels(channel, { limit }),
