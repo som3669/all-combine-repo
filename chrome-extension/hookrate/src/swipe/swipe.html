@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hookrate — Swipe file</title>
+    <link rel="stylesheet" href="swipe.css" />
+  </head>
+  <body>
+    <header class="top">
+      <span class="dot"></span>
+      <h1>Hookrate</h1>
+      <nav class="tabs">
+        <button class="tab active" data-tab="items">Swipe file</button>
+        <button class="tab" data-tab="tracked">Tracked channels</button>
+      </nav>
+      <div class="spacer"></div>
+      <button id="export" class="btn">Export</button>
+      <label class="btn" for="import-file">Import</label>
+      <input id="import-file" type="file" accept="application/json" hidden />
+      <button id="options" class="btn">Settings</button>
+    </header>
+
+    <main>
+      <section id="tab-items">
+        <div class="toolbar">
+          <input id="search" class="input" type="search" placeholder="Search titles, notes, tags" />
+          <select id="type" class="input">
+            <option value="">All types</option>
+            <option value="video">Videos</option>
+            <option value="short">Shorts</option>
+            <option value="channel">Channels</option>
+            <option value="thumbnail">Thumbnails</option>
+          </select>
+          <select id="folder" class="input"></select>
+          <span id="count" class="muted"></span>
+        </div>
+        <div id="items" class="grid"></div>
+      </section>
+
+      <section id="tab-tracked" hidden>
+        <div class="toolbar">
+          <button id="poll" class="btn solid">Poll now</button>
+          <span class="muted">Snapshots run every 6 hours while Chrome is open.</span>
+        </div>
+        <div id="tracked" class="list"></div>
+      </section>
+    </main>
+
+    <script src="swipe.js"></script>
+  </body>
+</html>

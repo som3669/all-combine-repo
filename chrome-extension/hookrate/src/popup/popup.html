@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hookrate</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <span class="dot"></span>
+      <div>
+        <h1>Hookrate</h1>
+        <p id="context" class="sub">reading page…</p>
+      </div>
+      <button id="options" class="btn" title="Settings">⚙</button>
+    </header>
+
+    <section class="quick">
+      <input id="query" class="input" type="search" placeholder="Channel, @handle, or video URL" />
+      <button id="lookup" class="btn solid">Analyse</button>
+    </section>
+
+    <section id="result" class="result"></section>
+
+    <nav class="links">
+      <button id="swipe" class="btn">Swipe file</button>
+      <button id="tracked" class="btn">Tracked</button>
+      <button id="clear" class="btn">Clear cache</button>
+    </nav>
+
+    <footer class="foot">
+      <span id="version"></span>
+      <span class="sub">estimates from public data</span>
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
