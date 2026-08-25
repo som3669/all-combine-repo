@@ -294,6 +294,88 @@
     }
   }
 
+  /**
+   * Revenue advice. The label changes with state because the question is
+   * different: an unmonetized channel wants a route in, a monetized one wants
+   * to know which lever is worth pulling.
+   */
+  async function showAdvice(a) {
+    const monetized = a.monetization && a.monetization.monetized;
+    const title =
+      monetized === true
+        ? `How to earn more — ${a.title}`
+        : monetized === false
+          ? `How to get monetized — ${a.title}`
+          : `Monetization plan — ${a.title}`;
+
+    const modal = HR.ui.modal({ title, width: 820 });
+    modal.body.append(HR.ui.skeleton(5, 'Working through the numbers…'));
+
+    const render = (res, withRequests) => {
+      const card = (r) =>
+        el('div.hr-row', {}, [
+          el('div.hr-row-main', {}, [
+            el('div.hr-row-title', { text: r.title }),
+            el('div.hr-row-meta', { text: r.detail }),
+            el('div.hr-row-meta', {}, [el('strong', { text: 'Do: ' }), el('span', { text: r.action })]),
+            el('div.hr-note.hr-muted', { text: `why: ${r.basis}` }),
+          ]),
+          el('div.hr-row-side', {}, [
+            r.monthlyImpact
+              ? HR.ui.chip(
+                  `${HR.fmt.money(r.monthlyImpact)}/mo`,
+                  'good',
+                  r.impactLabel || 'estimated monthly impact'
+                )
+              : HR.ui.chip(r.category, 'muted'),
+            HR.ui.chip(`${r.effort} effort`, 'muted'),
+            HR.ui.chip(`${r.confidence} confidence`, r.confidence === 'low' ? 'warn' : 'muted'),
+          ]),
+        ]);
+
+      modal.body.replaceChildren(
+        el('div.hr-panel-badges', {}, [
+          HR.ui.chip(
+            res.state === 'monetized'
+              ? 'monetized'
+              : res.state === 'not-monetized'
+                ? 'not monetized'
+                : 'monetization unknown',
+            res.state === 'monetized' ? 'good' : res.state === 'not-monetized' ? 'bad' : 'muted'
+          ),
+          res.path ? HR.ui.chip(`closest route: ${res.path}`, 'warn') : null,
+          !withRequests
+            ? HR.ui.button('Add viewer requests', () => run(true), {
+                title: 'Mines comments on the top 3 videos — one fetch each',
+              })
+            : null,
+        ]),
+        el('div.hr-note', { text: res.headline }),
+        ...res.recommendations.map(card),
+        res.recommendations.length
+          ? null
+          : el('div.hr-empty', { text: 'Nothing actionable found — not enough data on this channel.' }),
+        el('div.hr-subsection', {}, [
+          el('div.hr-subsection-title', { text: 'Assumptions behind the numbers' }),
+          el('div.hr-note.hr-muted', { text: res.assumptions.join(' · ') }),
+        ])
+      );
+    };
+
+    const run = async (withRequests) => {
+      modal.body.replaceChildren(
+        HR.ui.skeleton(5, withRequests ? 'Mining comments…' : 'Working through the numbers…')
+      );
+      try {
+        render(await HR.send('channel.advice', { channel: a.channelId, withRequests }), withRequests);
+      } catch (err) {
+        modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+      }
+    };
+
+    run(false);
+  }
+
   async function showSimilar(a) {
     const modal = HR.ui.modal({ title: `Similar channels — ${a.title}` });
     modal.body.append(HR.ui.skeleton(5, 'Searching…'));
@@ -387,7 +469,18 @@
       { kind: tracked ? 'solid' : 'ghost', title: 'Snapshot subs and views on a schedule' }
     );
 
+    const monetized = a.monetization && a.monetization.monetized;
+    const adviceLabel =
+      monetized === true ? 'Earn more' : monetized === false ? 'Get monetized' : 'Monetization plan';
+
     return [
+      HR.ui.button(adviceLabel, () => showAdvice(a), {
+        kind: 'solid',
+        title:
+          monetized === true
+            ? 'Ranked levers for more revenue, with the arithmetic behind each'
+            : 'The shortest route to monetization for this channel',
+      }),
       HR.ui.button('Outliers', () => showOutliers(a)),
       HR.ui.button('Formats', () => showFormats(a), {
         title: 'Which title patterns and lengths beat this channel’s median',
