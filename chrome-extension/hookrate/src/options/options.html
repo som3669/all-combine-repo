@@ -38,6 +38,42 @@
       </div>
 
       <div class="block">
+        <h2>Data source</h2>
+        <p>
+          Where channel and video figures come from. This is the setting that decides whether the
+          extension stays inside YouTube's Terms of Service.
+        </p>
+        <label class="toggle" style="display:block; margin-bottom:8px">
+          <input type="radio" name="source" value="page" />
+          <strong>Page reading</strong> — everything works, including monetization detection,
+          transcripts and comment analysis. Reads youtube.com pages programmatically, which
+          YouTube's Terms prohibit.
+        </label>
+        <label class="toggle" style="display:block; margin-bottom:8px">
+          <input type="radio" name="source" value="api" />
+          <strong>Official API, with fallback</strong> — uses the YouTube Data API for channel and
+          video figures, and falls back to page reading for what the API cannot provide.
+        </label>
+        <label class="toggle" style="display:block; margin-bottom:8px">
+          <input type="radio" name="source" value="strict" />
+          <strong>Official API only (strict)</strong> — never reads a page. Fully within the Terms.
+          Monetization detection, transcripts, comment sentiment, viewer requests and similar-video
+          discovery switch off, because the API does not expose them at any quota.
+        </label>
+        <label class="field-block">
+          <span>YouTube Data API v3 key</span>
+          <input id="api-key" class="input" type="password" autocomplete="off"
+                 placeholder="AIza..." />
+        </label>
+        <p class="muted" id="api-note">
+          Get a key from console.cloud.google.com — create a project, enable "YouTube Data API v3",
+          then create an API key. The free quota is 10,000 units a day; a full channel analysis
+          costs about 4, so roughly 2,000 channels a day. The key is stored locally and sent only to
+          googleapis.com.
+        </p>
+      </div>
+
+      <div class="block">
         <h2>Features</h2>
         <p>Everything runs locally. Turn off what you do not want injected.</p>
         <div class="toggles" id="features"></div>

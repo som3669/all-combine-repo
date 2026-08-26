@@ -139,7 +139,7 @@
 
   async function showOutliers(a) {
     const modal = HR.ui.modal({ title: `Top outliers — ${a.title}` });
-    modal.body.append(
+    HR.ui.add(modal.body, 
       el('div.hr-note', {
         text:
           'Ranked by how far each video beat this channel’s median. ' +
@@ -152,7 +152,7 @@
       )
     );
     if (!a.topOutliers.length) {
-      modal.body.append(el('div.hr-empty', { text: 'No clear outliers in the sampled uploads.' }));
+      HR.ui.add(modal.body, el('div.hr-empty', { text: 'No clear outliers in the sampled uploads.' }));
     }
   }
 
@@ -163,7 +163,7 @@
    */
   async function showFormats(a) {
     const modal = HR.ui.modal({ title: `Formats — ${a.title}`, width: 820 });
-    modal.body.append(HR.ui.skeleton(4, 'Clustering titles…'));
+    HR.ui.add(modal.body, HR.ui.skeleton(4, 'Clustering titles…'));
 
     try {
       const res = await HR.send('channel.formats', { channel: a.channelId });
@@ -237,7 +237,7 @@
         ]);
       };
 
-      modal.body.replaceChildren(
+      HR.ui.fill(modal.body, 
         el('div.hr-note', {
           text: 'Lift = the format’s median views ÷ the channel’s median. Repeated title segments are detected as branding and removed first, so clusters describe the hook rather than the show name.',
         }),
@@ -246,7 +246,7 @@
         res.note ? el('div.hr-note.hr-muted', { text: res.note }) : null
       );
     } catch (err) {
-      modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+      HR.ui.fill(modal.body, el('div.hr-error', { text: err.message }));
     }
   }
 
@@ -256,14 +256,14 @@
    */
   async function showRequests(a) {
     const modal = HR.ui.modal({ title: `Viewer requests — ${a.title}`, width: 780 });
-    modal.body.append(
+    HR.ui.add(modal.body, 
       HR.ui.skeleton(5, 'Reading comments on the top videos… (one fetch each)')
     );
 
     try {
       const res = await HR.send('channel.requests', { channel: a.channelId, videoLimit: 5 });
 
-      modal.body.replaceChildren(
+      HR.ui.fill(modal.body, 
         el('div.hr-note', {
           text:
             `${res.requestsFound} requests across ${res.videosScanned} videos. ` +
@@ -290,7 +290,7 @@
           : [el('div.hr-empty', { text: 'No requests matched. Comments may be disabled, or simply not asking for anything.' })])
       );
     } catch (err) {
-      modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+      HR.ui.fill(modal.body, el('div.hr-error', { text: err.message }));
     }
   }
 
@@ -309,7 +309,7 @@
           : `Monetization plan — ${a.title}`;
 
     const modal = HR.ui.modal({ title, width: 820 });
-    modal.body.append(HR.ui.skeleton(5, 'Working through the numbers…'));
+    HR.ui.add(modal.body, HR.ui.skeleton(5, 'Working through the numbers…'));
 
     const render = (res, withRequests) => {
       const card = (r) =>
@@ -333,7 +333,7 @@
           ]),
         ]);
 
-      modal.body.replaceChildren(
+      HR.ui.fill(modal.body, 
         el('div.hr-panel-badges', {}, [
           HR.ui.chip(
             res.state === 'monetized'
@@ -363,13 +363,13 @@
     };
 
     const run = async (withRequests) => {
-      modal.body.replaceChildren(
+      HR.ui.fill(modal.body, 
         HR.ui.skeleton(5, withRequests ? 'Mining comments…' : 'Working through the numbers…')
       );
       try {
         render(await HR.send('channel.advice', { channel: a.channelId, withRequests }), withRequests);
       } catch (err) {
-        modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+        HR.ui.fill(modal.body, el('div.hr-error', { text: err.message }));
       }
     };
 
@@ -378,10 +378,10 @@
 
   async function showSimilar(a) {
     const modal = HR.ui.modal({ title: `Similar channels — ${a.title}` });
-    modal.body.append(HR.ui.skeleton(5, 'Searching…'));
+    HR.ui.add(modal.body, HR.ui.skeleton(5, 'Searching…'));
     try {
       const res = await HR.send('similar.channels', { channel: a.channelId, limit: 24 });
-      modal.body.replaceChildren(
+      HR.ui.fill(modal.body, 
         el('div.hr-note', {
           text: `Signals: featured channels, related-video graph, keyword search (${res.terms.join(', ')}). No embedding index — recall is narrower than a paid tool.`,
         }),
@@ -401,10 +401,10 @@
         )
       );
       if (!res.results.length) {
-        modal.body.append(el('div.hr-empty', { text: 'Nothing similar found.' }));
+        HR.ui.add(modal.body, el('div.hr-empty', { text: 'Nothing similar found.' }));
       }
     } catch (err) {
-      modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+      HR.ui.fill(modal.body, el('div.hr-error', { text: err.message }));
     }
   }
 
@@ -565,7 +565,7 @@
       showMonetization(a);
     });
 
-    title.append(badge);
+    HR.ui.add(title, badge);
   }
 
   /**
@@ -584,13 +584,13 @@
       const btn = e.currentTarget;
       btn.disabled = true;
       btn.textContent = 'Resolving dates…';
-      out.replaceChildren(HR.ui.skeleton(3, 'Fetching a publish date per Short…'));
+      HR.ui.fill(out, HR.ui.skeleton(3, 'Fetching a publish date per Short…'));
 
       try {
         const w = await HR.send('channel.shortsWindow', { channel: a.channelId, limit: 30 });
         const pct = Math.min(100, (w.countedViews / w.threshold) * 100);
 
-        out.replaceChildren(
+        HR.ui.fill(out, 
           HR.ui.stats([
             {
               label: 'Valid — counts toward threshold',
@@ -666,7 +666,7 @@
         );
         btn.textContent = 'Re-check';
       } catch (err) {
-        out.replaceChildren(el('div.hr-error', { text: err.message }));
+        HR.ui.fill(out, el('div.hr-error', { text: err.message }));
         btn.textContent = 'Retry';
       } finally {
         btn.disabled = false;
@@ -689,11 +689,11 @@
     const m = a.monetization;
     const modal = HR.ui.modal({ title: `Monetization — ${a.title}`, width: 620 });
     if (!m) {
-      modal.body.append(el('div.hr-empty', { text: 'No monetization data was collected.' }));
+      HR.ui.add(modal.body, el('div.hr-empty', { text: 'No monetization data was collected.' }));
       return;
     }
 
-    modal.body.append(
+    HR.ui.add(modal.body, 
       el('div.hr-panel-badges', {}, [monetizationChip(m)]),
       el('div.hr-note', { text: m.basis }),
       HR.ui.stats([
@@ -811,7 +811,7 @@
 
     HR.send('similar.channels', { channel: a.channelId, limit: 12 })
       .then((res) => {
-        similarHost.replaceChildren(
+        HR.ui.fill(similarHost, 
           el('div.hr-subsection-title', { text: 'Similar channels' }),
           ...res.results.map((c) =>
             el('div.hr-row', {}, [
@@ -834,7 +834,7 @@
         );
       })
       .catch((err) =>
-        similarHost.replaceChildren(el('div.hr-error', { text: err.message }))
+        HR.ui.fill(similarHost, el('div.hr-error', { text: err.message }))
       );
 
     return el('div.hr-analysis', { id: VIEW_ID }, [
@@ -917,7 +917,7 @@
     const siblings = nativeTabs(strip);
     if (!siblings.length) return;
 
-    strip.append(
+    HR.ui.add(strip, 
       cloneTab(siblings[siblings.length - 1], {
         id: TAB_ID,
         label: 'Analysis',
@@ -977,6 +977,13 @@
       panel.root.dataset.ref = ref;
 
       const head = el('div.hr-panel-badges', {}, [
+        // Say where the numbers came from. In strict mode especially, the user
+        // should be able to see at a glance that no page was read.
+        a.dataSource === 'api'
+          ? HR.ui.chip('official API', 'good', 'Figures came from the YouTube Data API')
+          : a.apiError
+            ? HR.ui.chip('API unavailable', 'warn', a.apiError)
+            : null,
         monetizationChip(a.monetization),
         a.hasShorts ? HR.ui.chip('Shorts', 'muted') : null,
         a.category ? HR.ui.chip(a.category, 'muted') : null,
@@ -996,7 +1003,7 @@
       );
 
       const actions = await actionsFor(a);
-      panel.root.querySelector('.hr-panel-actions')?.replaceChildren(...actions);
+      HR.ui.fill(panel.root.querySelector('.hr-panel-actions'), ...actions);
       panel.setStatus('');
 
       // The verdict badge on the title and the Analysis tab in YouTube's own

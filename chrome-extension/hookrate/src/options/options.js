@@ -99,6 +99,29 @@ async function init() {
   const { baseRPM: defaults } = await send('rpm.defaults');
   renderRpm(defaults);
 
+  // ---- data source ------------------------------------------------------
+  const source = settings.data?.source || 'page';
+  for (const radio of document.querySelectorAll('input[name="source"]')) {
+    radio.checked = radio.value === source;
+    radio.addEventListener('change', async () => {
+      if (!radio.checked) return;
+      if (radio.value !== 'page' && !$('#api-key').value.trim()) {
+        flash('Add an API key first — that mode needs one');
+        // Put the choice back rather than saving a mode that cannot work.
+        for (const r of document.querySelectorAll('input[name="source"]')) {
+          r.checked = r.value === (settings.data?.source || 'page');
+        }
+        return;
+      }
+      await save({ data: { source: radio.value } });
+    });
+  }
+
+  $('#api-key').value = settings.data?.apiKey || '';
+  $('#api-key').addEventListener('change', (e) =>
+    save({ data: { apiKey: e.target.value.trim() } })
+  );
+
   $('#period').value = settings.tracker?.periodMinutes ?? 360;
   $('#period').addEventListener('change', (e) =>
     save({ tracker: { periodMinutes: Math.max(30, Number(e.target.value) || 360) } })

@@ -1,9 +1,8 @@
 // YouTube Studio: mid-roll ad break helper.
 //
-// Honest about its limits. Studio's DOM is unstable and unversioned, so this
-// does the safe part deterministically (compute a break schedule, put it on
-// the clipboard) and only *attempts* the click-through, reporting when the
-// control it needs is not on the page.
+// Studio's DOM is unstable and unversioned, so this does the deterministic part
+// only: compute a mid-roll schedule and put it on the clipboard. It never
+// touches the monetisation form itself.
 
 (() => {
   const HR = (window.HR = window.HR || {});
@@ -58,7 +57,7 @@
 
     const compute = () => {
       const list = schedule(lengthSec, { everySec: Number(everySec.value) || 240 });
-      out.replaceChildren(
+      HR.ui.fill(out, 
         list.length
           ? el('div', {}, [
               el('strong', { text: `${list.length} breaks: ` }),

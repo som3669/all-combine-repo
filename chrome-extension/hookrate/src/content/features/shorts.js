@@ -37,18 +37,18 @@
       ]),
       el('div.hr-mini-body'),
     ]);
-    document.body.append(node);
+    HR.ui.add(document.body, node);
     return node;
   }
 
   async function render(videoId) {
     const node = overlay();
     const body = node.querySelector('.hr-mini-body');
-    body.replaceChildren(el('div.hr-mini-row', { text: 'Loading…' }));
+    HR.ui.fill(body, el('div.hr-mini-row', { text: 'Loading…' }));
 
     try {
       const v = await HR.send('video.stats', { videoId, withChannel: true });
-      body.replaceChildren(
+      HR.ui.fill(body, 
         row('Views', HR.fmt.n(v.views)),
         row('Views/hr', HR.fmt.n(v.viewsPerHour)),
         row(
@@ -71,7 +71,7 @@
         ])
       );
     } catch (err) {
-      body.replaceChildren(el('div.hr-mini-row.hr-bad', { text: err.message }));
+      HR.ui.fill(body, el('div.hr-mini-row.hr-bad', { text: err.message }));
     }
   }
 

@@ -7,6 +7,26 @@
 
   HR.ui = {
     /**
+     * Replace / append children, dropping the empty ones.
+     *
+     * Why these exist: `replaceChildren()` and `append()` stringify anything
+     * that is not a Node, so a `null` from a conditional — `cond ? el(…) : null`
+     * — renders as the literal text "null" on the page. `HR.el()` already
+     * filters its children, but these are the direct DOM calls that do not.
+     */
+    fill(host, ...children) {
+      if (!host) return host;
+      host.replaceChildren(...children.flat().filter((c) => c != null && c !== false));
+      return host;
+    },
+
+    add(host, ...children) {
+      if (!host) return host;
+      host.append(...children.flat().filter((c) => c != null && c !== false));
+      return host;
+    },
+
+    /**
      * A titled card. Returns { root, body, setBody, setStatus, remove }.
      * Cards are idempotent by `id`: injecting twice replaces, never stacks.
      */

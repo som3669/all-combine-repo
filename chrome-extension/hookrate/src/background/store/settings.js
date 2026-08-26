@@ -34,6 +34,21 @@ export const DEFAULTS = {
   tracker: {
     periodMinutes: 360,
   },
+
+  /**
+   * Where channel and video data comes from.
+   *
+   *   'page'   — read youtube.com pages. Everything works. This is against
+   *              YouTube's Terms, which prohibit automated access.
+   *   'api'    — use the official Data API with the user's own key, and fall
+   *              back to page reads only for what the API cannot provide.
+   *   'strict' — API only. Features the API cannot serve are switched off
+   *              rather than quietly falling back. Fully within the Terms.
+   */
+  data: {
+    source: 'page',
+    apiKey: '',
+  },
   ui: {
     compact: false,
     accent: '#ff4d3d',

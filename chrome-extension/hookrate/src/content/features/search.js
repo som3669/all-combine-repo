@@ -80,7 +80,7 @@
     , { title: 'Save to swipe file' });
 
     const host = row.querySelector('#meta, #metadata') || row;
-    host.append(el('div.hr-inline', {}, [chip, deep, save]));
+    HR.ui.add(host, el('div.hr-inline', {}, [chip, deep, save]));
   }
 
   function annotateAll() {
@@ -103,7 +103,7 @@
     const out = el('div.hr-results');
 
     const run = async () => {
-      out.replaceChildren(HR.ui.skeleton(6, 'Searching and enriching channels…'));
+      HR.ui.fill(out, HR.ui.skeleton(6, 'Searching and enriching channels…'));
       try {
         const res = await HR.send('discover.niche', {
           query: q,
@@ -114,7 +114,7 @@
           enrich: 12,
         });
 
-        out.replaceChildren(
+        HR.ui.fill(out, 
           el('div.hr-note', {
             text:
               `${res.results.length} of ${res.scanned} results kept · ` +
@@ -155,13 +155,13 @@
             ])
           )
         );
-        if (!res.results.length) out.append(el('div.hr-empty', { text: 'Nothing passed the filters.' }));
+        if (!res.results.length) HR.ui.add(out, el('div.hr-empty', { text: 'Nothing passed the filters.' }));
       } catch (err) {
-        out.replaceChildren(el('div.hr-error', { text: err.message }));
+        HR.ui.fill(out, el('div.hr-error', { text: err.message }));
       }
     };
 
-    modal.body.append(
+    HR.ui.add(modal.body, 
       el('div.hr-note', {
         text: 'Runs YouTube search, then enriches the top channels and applies the same maths the channel panel uses. Recall is narrower than an indexed niche finder — this searches, it does not scan every channel on the platform.',
       }),
@@ -186,9 +186,9 @@
         HR.ui.button('Keyword research', () => research(q), { kind: 'solid' }),
         HR.ui.button('Suggestions', async () => {
           const modal = HR.ui.modal({ title: `Related searches — "${q}"`, width: 520 });
-          modal.body.append(HR.ui.skeleton(4, 'Loading…'));
+          HR.ui.add(modal.body, HR.ui.skeleton(4, 'Loading…'));
           const rows = await HR.send('discover.suggestions', { prefix: q }).catch(() => []);
-          modal.body.replaceChildren(
+          HR.ui.fill(modal.body, 
             el('div.hr-note', { text: "YouTube's own autocomplete — a free read on what people actually type." }),
             ...rows.map((s) =>
               el('div.hr-link-row', {}, [
@@ -196,7 +196,7 @@
               ])
             )
           );
-          if (!rows.length) modal.body.append(el('div.hr-empty', { text: 'No suggestions returned.' }));
+          if (!rows.length) HR.ui.add(modal.body, el('div.hr-empty', { text: 'No suggestions returned.' }));
         }),
       ]),
     ]);

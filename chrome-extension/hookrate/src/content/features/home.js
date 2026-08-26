@@ -100,7 +100,7 @@
         if (meta.videoId) deepScore(card, meta, badge);
       },
     });
-    thumb.append(badge);
+    HR.ui.add(thumb, badge);
   }
 
   // ---- filtering ---------------------------------------------------------
@@ -271,7 +271,7 @@
       modal.close();
     };
 
-    modal.body.append(
+    HR.ui.add(modal.body, 
       el('div.hr-note', {
         text: 'Swaps your asset into a real grid card so you judge it against live competition, not a blank mockup. Nothing is uploaded — the change is local and reverts on reload.',
       }),

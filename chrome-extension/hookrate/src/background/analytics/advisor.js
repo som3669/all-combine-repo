@@ -20,9 +20,25 @@ const MIDROLL_MIN_SEC = 480; // 8 minutes: the mid-roll threshold
 const MIDROLL_UPLIFT = 0.3; // +30% on ad revenue, conservative end of 20–50%
 const SPONSOR_CPM_LOW = 15; // per 1,000 views, integrated mention
 const SPONSOR_CPM_HIGH = 35;
-const MEMBERSHIP_CONVERSION = 0.003; // 0.3% of subscribers, conservative
 const MEMBERSHIP_PRICE = 4.99;
 const MEMBERSHIP_SHARE = 0.7; // YouTube takes 30%
+
+/**
+ * Membership conversion, tapered by audience size.
+ *
+ * A flat percentage does not survive contact with a large channel: 0.3% of 29M
+ * subscribers is $300k a month, which is arithmetically correct and completely
+ * false. Subscriber counts are cumulative and mostly inactive, and the share
+ * willing to pay falls sharply as a channel grows past its core audience. This
+ * taper keeps small-channel estimates honest without producing fantasy numbers
+ * at the top end.
+ */
+function membershipRate(subscribers) {
+  if (subscribers <= 100e3) return 0.003;
+  if (subscribers <= 1e6) return 0.001;
+  if (subscribers <= 5e6) return 0.0004;
+  return 0.0002;
+}
 
 const YPP_SUBS = 1000;
 const YPP_WATCH_HOURS = 4000;
@@ -296,16 +312,17 @@ function revenuePlan(a) {
   // 5. Memberships and merch, when the surfaces are not switched on.
   const surfaces = (a.monetization && a.monetization.surfaces) || {};
   if (a.subscribers >= 1000 && !surfaces.memberships) {
-    const value = a.subscribers * MEMBERSHIP_CONVERSION * MEMBERSHIP_PRICE * MEMBERSHIP_SHARE;
+    const rate = membershipRate(a.subscribers);
+    const value = a.subscribers * rate * MEMBERSHIP_PRICE * MEMBERSHIP_SHARE;
     out.push(
       rec({
         id: 'memberships',
         category: 'diversification',
         title: 'Channel memberships are not enabled',
-        detail: `At ${(MEMBERSHIP_CONVERSION * 100).toFixed(1)}% of ${a.subscribers.toLocaleString('en-US')} subscribers joining at $${MEMBERSHIP_PRICE}, after YouTube's 30% cut.`,
+        detail: `At ${(rate * 100).toFixed(2)}% of ${a.subscribers.toLocaleString('en-US')} subscribers joining at $${MEMBERSHIP_PRICE}, after YouTube's 30% cut. The rate is tapered for audience size — a flat percentage of a large subscriber count produces a fantasy number.`,
         action: 'Enable memberships and give one perk the content already produces — early access, or the source files.',
         monthlyImpact: value,
-        impactLabel: `${(MEMBERSHIP_CONVERSION * 100).toFixed(1)}% conversion assumed`,
+        impactLabel: `${(rate * 100).toFixed(2)}% conversion assumed`,
         effort: 'low',
         confidence: 'low',
         basis: 'no membership surface found on the channel',
@@ -467,7 +484,7 @@ export function advise({ analytics, formats = null, requests = null }) {
     assumptions: [
       `mid-roll uplift +${Math.round(MIDROLL_UPLIFT * 100)}% on ad revenue`,
       `sponsor CPM $${SPONSOR_CPM_LOW}–${SPONSOR_CPM_HIGH} per 1,000 views`,
-      `membership conversion ${(MEMBERSHIP_CONVERSION * 100).toFixed(1)}% at $${MEMBERSHIP_PRICE}, less YouTube's 30%`,
+      `membership conversion tapered by audience size, at $${MEMBERSHIP_PRICE} less YouTube's 30%`,
       'watch hours estimated at 45% average view duration',
       'revenue figures inherit the RPM model, which is a benchmark, not your dashboard',
     ],

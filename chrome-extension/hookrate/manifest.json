@@ -94,5 +94,8 @@
         "https://studio.youtube.com/*"
       ]
     }
+  ],
+  "optional_host_permissions": [
+    "https://www.googleapis.com/*"
   ]
 }

@@ -2,6 +2,7 @@
 
 import * as yt from '../lib/innertube.js';
 import * as cache from '../lib/cache.js';
+import * as dataapi from '../lib/dataapi.js';
 import {
   find,
   findAll,
@@ -184,19 +185,88 @@ export async function uploads(channelId, limit = 60) {
   });
 }
 
+/**
+ * Gather the raw channel material from whichever source is configured.
+ *
+ * The API path is preferred when a key is present because reading pages
+ * programmatically is against YouTube's Terms; the page path stays for what the
+ * API cannot serve, and 'strict' refuses to fall back at all.
+ */
+async function gather(channelId, source, apiKey) {
+  if (source === 'page' || !apiKey) {
+    if (source === 'strict') {
+      throw new Error('strict mode is on but no YouTube Data API key is configured');
+    }
+    const [main, meta, vids] = await Promise.all([
+      yt.page(`/channel/${channelId}`),
+      about(channelId),
+      uploads(channelId),
+    ]);
+    return { head: header(main.data), meta, vids, via: 'page', html: main.html };
+  }
+
+  try {
+    const core = await dataapi.channel(channelId, apiKey);
+    const vids = core.uploadsPlaylist
+      ? await dataapi.uploads(core.uploadsPlaylist, apiKey, 60)
+      : [];
+
+    return {
+      via: 'api',
+      html: '',
+      head: {
+        title: core.title,
+        handle: core.handle,
+        avatar: core.avatar,
+        subscribers: core.subscribers,
+        videoCount: core.videoCount,
+        keywords: String(core.keywords || '')
+          .split(/["',]/)
+          .map((s) => s.trim())
+          .filter(Boolean),
+        description: core.description,
+      },
+      meta: {
+        country: core.country,
+        totalViews: core.totalViews,
+        joinedAt: core.joinedAt,
+        links: [],
+        html: '',
+      },
+      vids,
+    };
+  } catch (err) {
+    if (source === 'strict') throw err;
+    // 'api' mode degrades rather than failing: a quota-exhausted key should not
+    // take the whole panel down.
+    const [main, meta, vids] = await Promise.all([
+      yt.page(`/channel/${channelId}`),
+      about(channelId),
+      uploads(channelId),
+    ]);
+    return {
+      head: header(main.data),
+      meta,
+      vids,
+      via: 'page',
+      html: main.html,
+      apiError: err.message,
+    };
+  }
+}
+
 /** Full analytics bundle for one channel. */
 export async function analytics(channelIdOrHandle, { deep = true } = {}) {
   const channelId = await resolve(channelIdOrHandle);
 
   return cache.wrap('channel', channelId, cache.TTL.hour * 6, async () => {
     const now = Date.now();
-    const [main, meta, vids] = await Promise.all([
-      yt.page(`/channel/${channelId}`),
-      about(channelId),
-      uploads(channelId),
-    ]);
+    const stored = await chrome.storage.local.get('hr:settings');
+    const cfg = (stored['hr:settings'] || {}).data || {};
+    const source = cfg.source || 'page';
 
-    const head = header(main.data);
+    const gathered = await gather(channelId, source, cfg.apiKey);
+    const { head, meta, vids } = gathered;
     const enriched = await resolveMissingMeta(vids);
     const scored = outliers.annotate(enriched);
     const longForm = scored.filter((v) => !v.isShort);
@@ -225,7 +295,6 @@ export async function analytics(channelIdOrHandle, { deep = true } = {}) {
       : null;
 
     const cat = await category(longForm[0]?.videoId);
-    const stored = await chrome.storage.local.get('hr:settings');
     const settings = stored['hr:settings'] || {};
     const revenueOpts = {
       category: cat,
@@ -305,10 +374,28 @@ export async function analytics(channelIdOrHandle, { deep = true } = {}) {
       topOutliers: outliers.top(scored, { limit: 10 }),
     };
 
-    if (deep) {
+    result.dataSource = gathered.via;
+    if (gathered.apiError) result.apiError = gathered.apiError;
+
+    if (deep && source === 'strict') {
+      // Monetization reads ad slots out of page data, which the API does not
+      // expose at any quota. Strict mode reports that plainly instead of
+      // quietly reaching for a page and breaking its own promise.
+      result.monetization = {
+        monetized: null,
+        confidence: 'unavailable',
+        basis: 'strict mode — ad slots are not exposed by the YouTube Data API',
+        probes: [],
+        surfaces: {},
+        eligibility: monetization.eligibility({
+          subscribers: head.subscribers,
+          videos: scored,
+        }),
+      };
+    } else if (deep) {
       result.monetization = await monetization.detect({
         channelId,
-        channelHtml: meta.html + main.html.slice(0, 200000),
+        channelHtml: (meta.html || '') + (gathered.html || '').slice(0, 200000),
         videos: scored,
         subscribers: head.subscribers,
       });
