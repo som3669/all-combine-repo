@@ -252,11 +252,24 @@ code supports.
 | Health information | **No** | |
 | Financial and payment information | **No** | |
 | Authentication information | **No** | |
-| Personal communications | **No** | Comments are read from public pages to compute sentiment and mine requests; they are not collected, stored beyond a local cache, or transmitted |
+| Personal communications | **No** | This category means private messages. YouTube comments are public posts, read to compute sentiment and mine requests; they fall under Website content below |
 | Location | **No** | |
-| Web history | **No** | The extension does not read or store browsing history |
-| User activity | **No** | No clicks, keystrokes or usage are recorded or transmitted |
-| Website content | **No** | Public page content is read and cached locally to compute analytics, but is never transmitted to the developer or any third party |
+| Web history | **No** | No list of visited pages is built or stored. Cached analytics are keyed by channel, which is a byproduct of a lookup rather than a browsing record, and never leaves the device |
+| User activity | **No** | No clicks, keystrokes, scroll or network monitoring of any kind |
+| Website content | **Yes** | The extension reads page text and view counts from YouTube and caches them locally to compute analytics |
+
+**Why "Website content" is Yes.** It reads page content and writes it to local
+storage, which is obtaining and handling website content even though nothing is
+transmitted anywhere. The store's own FAQ lists "content scraping" as handling
+user data. The enforcement risk here is asymmetric: under-disclosing is what gets
+items suspended, while disclosing a category the extension genuinely touches
+costs nothing but a line on the listing. Checking it also keeps the form
+consistent with PRIVACY.md, which describes exactly this behaviour — and
+inconsistency between the two is itself a violation.
+
+Checking it commits the item to the Limited Use requirements, which this code
+already satisfies: the data is used only for the stated purpose, is never
+transferred, is never used for advertising, and no human ever sees it.
 
 **Certifications** (all three must be checked, and all three are true):
 
