@@ -221,9 +221,35 @@ code supports.
 - I do not use or transfer user data for purposes unrelated to my item's single purpose
 - I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Privacy policy URL:** host `PRIVACY.md` somewhere public — a GitHub Pages
-page or the repository file view both qualify — and paste the URL into the
-dedicated dashboard field. It must not live only in the description.
+**Privacy policy URL.** Run `node tool/privacy.mjs` to render `PRIVACY.md` into
+`docs/index.html`, then host that. The page is generated rather than
+hand-written so the hosted copy cannot drift from the source — drift between the
+policy, the dashboard disclosures and actual behaviour is itself grounds for
+suspension.
+
+How comparable extensions host theirs:
+
+| Extension | Hosting |
+|---|---|
+| vidIQ | own domain — `vidiq.com/privacy/` |
+| NexLev | Google Sites — `sites.google.com/.../nexlev-privacy/home` |
+
+Options here, best first:
+
+1. **GitHub Pages** on the existing public repo. Free, no new account, and the
+   policy sits in version control next to the code it describes, so a behaviour
+   change and a policy change land in the same commit. Enable it under
+   Settings → Pages → deploy from branch `main`, folder `/`, and the URL is
+   `https://som3669.github.io/all-combine-repo/chrome-extension/hookrate/docs/`
+2. **The GitHub file view** of `PRIVACY.md` — works immediately with no setup,
+   but it 404s the moment the repo goes private, and a dead privacy policy URL
+   is a live compliance problem rather than a broken link.
+3. **Google Sites**, which is what NexLev uses. Independent of the repo, but a
+   second place to keep in sync by hand.
+4. **Own domain**, if Hookrate ever gets one. What vidIQ does.
+
+Paste the final URL into the dedicated dashboard field. It must not live only in
+the description.
 
 ---
 
@@ -243,26 +269,21 @@ and the tracker — exists to serve that single purpose.
 - [x] Store icon 128x128 — `assets/icons/icon128.png`
 - [x] Small promo tile 440x280 — `assets/store/promo-small-440x280.png`
 - [x] Marquee promo tile 1400x560 — `assets/store/promo-marquee-1400x560.png`
-- [ ] **Screenshots, 1280x800 — you have to capture these yourself**
+- [x] Screenshots, 1280x800 — `assets/store/screenshots/`
 
-Screenshots must show the extension actually running. A mocked-up image would
-be a misrepresentation of functionality, which is exactly what the "Be Honest"
-policy removes extensions for, so they cannot be generated ahead of time.
+Upload them in this order; the first is the one most people judge the listing on:
 
-Capture these four, in this order — the first is the one most people judge the
-listing on:
+1. `1-channel-analytics.png` — the panel on a 29M-subscriber channel, with the
+   monetization badge beside the channel name
+2. `2-formats.png` — format clustering, with the detected title template
+3. `3-revenue-advice.png` — ranked recommendations and their impact estimates
+4. `4-watch-panel.png` — watch page stats and the outlier multiplier
 
-1. **Channel analytics panel** on a large, well-known channel, with the
-   monetization badge visible next to the channel name. Pick a channel whose
-   numbers are impressive enough to be legible at thumbnail size.
-2. **Formats modal**, showing title-pattern lift and the detected template.
-3. **Watch page sidebar**, showing the outlier multiplier and the stat grid.
-4. **Earn more / revenue advice modal**, showing ranked recommendations with
-   their impact estimates.
-
-Set the browser window so the captured area is 1280x800, use the dark theme
-(the panels were designed against it), and avoid capturing your own subscriber
-counts or Studio pages if you would rather not publish them.
+These are captures of the extension actually running against live YouTube,
+produced by `tool/smoke.mjs`'s sibling harness rather than mocked up. That
+distinction matters: a fabricated screenshot misrepresents functionality, which
+is what the "Be Honest" policy removes extensions for. Re-capture after any UI
+change so the listing never shows something the extension no longer does.
 
 ---
 

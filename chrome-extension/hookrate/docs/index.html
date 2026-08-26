@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy — Hookrate</title>
+<meta name="description" content="Privacy policy for the Hookrate browser extension. No server, no account, no telemetry." />
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 40px 22px 96px; max-width: 760px;
+    font: 16px/1.65 -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+    color: #16161a; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e9e9ec; background: #121214; }
+    td, th { border-color: #2e2e33 !important; }
+    hr { border-color: #2e2e33 !important; }
+    code { background: #1e1e22 !important; }
+    .mark { background: #1e1e22 !important; border-color: #2e2e33 !important; }
+  }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 21px; margin: 38px 0 10px; }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p, li { font-size: 16px; }
+  ul { padding-left: 22px; }
+  a { color: #d63b2b; }
+  code {
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+    background: #f2f2f4; padding: 1px 5px; border-radius: 4px;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 15px; }
+  th, td { border: 1px solid #e2e2e5; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { font-weight: 600; }
+  hr { border: 0; border-top: 1px solid #e2e2e5; margin: 34px 0; }
+  .mark {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid #e2e2e5; background: #f8f8f9;
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 28px; font-size: 14px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #ff4d3d; flex: none; }
+</style>
+</head>
+<body>
+<div class="mark"><span class="dot"></span><span>Hookrate extension · version 0.1.0</span></div>
+<h1>Hookrate — Privacy Policy</h1>
+<p><strong>Last updated: 26 August 2026</strong></p>
+<p>Hookrate is a browser extension that shows research and analytics for YouTube channels and videos on the pages you are already viewing.</p>
+<p>The short version: <strong>Hookrate has no server.</strong> There is no account, no login, no analytics, no telemetry and no advertising. Nothing you do in the extension is sent to us, because there is no "us" to send it to. Everything the extension stores stays in your own browser profile.</p>
+<hr />
+<h2>What Hookrate does with data</h2>
+<h3>Data it reads</h3>
+<p>When you are on a YouTube page, Hookrate reads publicly visible information in order to calculate what it shows you:</p>
+<ul><li>The channel or video you are currently viewing (its ID, title, view counts,</li></ul>
+<p>publish dates, durations)</p>
+<ul><li>Publicly available channel pages, video pages, captions and comments, fetched</li></ul>
+<p>in the background to compute analytics such as outlier scores, revenue estimates and monetization signals</p>
+<p>This is the same information any visitor to those pages can see. Hookrate does not read your private YouTube data, your account details, your subscriptions, your watch history, your email address, or your YouTube Studio revenue figures.</p>
+<h3>Data it stores</h3>
+<p>All of it is stored locally, using the browser's own extension storage (<code>chrome.storage.local</code>) on your device:</p>
+<table><thead><tr><th>What</th><th>Why</th><th>How long</th></tr></thead><tbody><tr><td>Cached lookups of public channel/video data</td><td>So the same lookup does not repeat on every page view</td><td>Expires automatically (1 hour to 1 week depending on type); clearable at any time in Settings</td></tr><tr><td>Your swipe file — items you explicitly save</td><td>So your saved videos, channels and notes persist</td><td>Until you delete them</td></tr><tr><td>Tracked channels and their snapshot history</td><td>So growth deltas can be shown over time</td><td>Until you stop tracking that channel</td></tr><tr><td>Your settings and filter preferences</td><td>So the extension behaves the way you configured it</td><td>Until you reset them</td></tr></tbody></table>
+<h3>Data it sends</h3>
+<p>Hookrate sends <strong>no data to any server operated by its developer</strong>, because no such server exists.</p>
+<p>The extension makes requests to the following hosts, and only these:</p>
+<table><thead><tr><th>Host</th><th>Purpose</th></tr></thead><tbody><tr><td><code>www.youtube.com</code></td><td>Fetch public channel pages, video pages, captions and comments to compute analytics</td></tr><tr><td><code>studio.youtube.com</code></td><td>Display the ad-break helper, when you are on your own Studio pages</td></tr><tr><td><code>i.ytimg.com</code></td><td>Load and download video thumbnails</td></tr><tr><td><code>suggestqueries-clients6.youtube.com</code></td><td>Fetch YouTube's public search suggestions for keyword research</td></tr><tr><td><code>www.googleapis.com</code></td><td><strong>Only if you choose to.</strong> Used for the official YouTube Data API, and only when you have selected an API data source and supplied your own API key</td></tr></tbody></table>
+<p><strong>These requests are made without cookies</strong> (<code>credentials: 'omit'</code>). Your YouTube session, identity and account are deliberately not attached to them. This is a design decision, not a side effect: research lookups should not be linked to your account, and an unauthenticated request also returns more accurate advertising data than a signed-in one would.</p>
+<h3>Your YouTube Data API key, if you provide one</h3>
+<p>Hookrate can read its figures from the official YouTube Data API instead of from public pages. That is optional and off by default. If you turn it on:</p>
+<ul><li>You create the API key yourself in Google Cloud. Hookrate never issues one.</li><li>The key is stored in local extension storage on your device, exactly like your</li></ul>
+<p>other settings, and is never transmitted anywhere except to <code>www.googleapis.com</code> as part of the API request it authorises.</p>
+<ul><li>Access to <code>www.googleapis.com</code> is an <strong>optional</strong> permission. Chrome asks for</li></ul>
+<p>it only when you enable an API data source, and you can revoke it at any time.</p>
+<ul><li>The developer never sees the key, the quota it consumes, or the results.</li></ul>
+<p>There is a strict setting that uses the API only and never reads a page. Some features are switched off in that mode because the API does not provide the data they need, which is stated in the settings rather than hidden.</p>
+<hr />
+<h2>What Hookrate never does</h2>
+<ul><li>No user accounts, sign-in, or identifiers of any kind</li><li>No analytics, telemetry, crash reporting or usage tracking</li><li>No advertising, and no use of any data for advertising</li><li>No selling, renting or sharing of data with anyone — there is no recipient</li><li>No collection of personally identifiable information</li><li>No reading of pages outside <code>youtube.com</code> and <code>studio.youtube.com</code></li><li>No remotely hosted code; the entire extension is contained in the package you</li></ul>
+<p>install and can be read in full</p>
+<h2>Permissions, and why each is needed</h2>
+<table><thead><tr><th>Permission</th><th>Why</th></tr></thead><tbody><tr><td><code>storage</code>, <code>unlimitedStorage</code></td><td>Store your swipe file, tracked channels, settings and cached lookups on your device. <code>unlimitedStorage</code> is needed because saved thumbnails and snapshot history can exceed the small default quota.</td></tr><tr><td><code>alarms</code></td><td>Re-check tracked channels on a schedule so growth over time can be shown. Without it, tracking would only update while a YouTube tab is open.</td></tr><tr><td><code>downloads</code></td><td>Save thumbnails, transcripts and CSV exports to your computer when you click those buttons. Used only in response to a click.</td></tr><tr><td>Host access to <code>youtube.com</code>, <code>studio.youtube.com</code>, <code>i.ytimg.com</code>, <code>suggestqueries-clients6.youtube.com</code></td><td>Read public YouTube data to calculate the analytics shown, and load thumbnails.</td></tr><tr><td>Optional host access to <code>www.googleapis.com</code></td><td>Requested only if you enable the official YouTube Data API and supply your own key. Not granted otherwise.</td></tr></tbody></table>
+<p>Hookrate does not request access to any other website.</p>
+<h2>Files you export</h2>
+<p>Thumbnail, transcript and CSV downloads, and swipe-file JSON exports, are written directly to your computer by your browser. They are not uploaded anywhere.</p>
+<h2>Children</h2>
+<p>Hookrate is a tool for content creators and researchers. It is not directed at children and collects no data from anyone, including children.</p>
+<h2>Changes to this policy</h2>
+<p>If this policy changes, the updated version will be published at the same location with a revised date at the top. Because the extension collects nothing, any future change that introduced collection would be announced prominently in the extension itself before it took effect.</p>
+<h2>Contact</h2>
+<p>Questions about this policy or the extension's data handling can be raised via the repository issue tracker for the project.</p>
+<hr />
+<h2>A note on YouTube</h2>
+<p>Hookrate is an independent tool. It is not affiliated with, endorsed by, or sponsored by YouTube or Google. "YouTube" is a trademark of Google LLC, used here only to describe what the extension is compatible with.</p>
+<p>Hookrate reads publicly available pages on youtube.com to compute its estimates. All figures it presents — revenue, RPM, watch hours, monetization status — are <strong>estimates derived from public data</strong>, not reports from YouTube, and are labelled as such in the interface.</p>
+</body>
+</html>

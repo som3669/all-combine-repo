@@ -54,12 +54,30 @@ The extension makes requests to the following hosts, and only these:
 | `studio.youtube.com` | Display the ad-break helper, when you are on your own Studio pages |
 | `i.ytimg.com` | Load and download video thumbnails |
 | `suggestqueries-clients6.youtube.com` | Fetch YouTube's public search suggestions for keyword research |
+| `www.googleapis.com` | **Only if you choose to.** Used for the official YouTube Data API, and only when you have selected an API data source and supplied your own API key |
 
 **These requests are made without cookies** (`credentials: 'omit'`). Your YouTube
 session, identity and account are deliberately not attached to them. This is a
 design decision, not a side effect: research lookups should not be linked to your
 account, and an unauthenticated request also returns more accurate advertising
 data than a signed-in one would.
+
+### Your YouTube Data API key, if you provide one
+
+Hookrate can read its figures from the official YouTube Data API instead of from
+public pages. That is optional and off by default. If you turn it on:
+
+- You create the API key yourself in Google Cloud. Hookrate never issues one.
+- The key is stored in local extension storage on your device, exactly like your
+  other settings, and is never transmitted anywhere except to
+  `www.googleapis.com` as part of the API request it authorises.
+- Access to `www.googleapis.com` is an **optional** permission. Chrome asks for
+  it only when you enable an API data source, and you can revoke it at any time.
+- The developer never sees the key, the quota it consumes, or the results.
+
+There is a strict setting that uses the API only and never reads a page. Some
+features are switched off in that mode because the API does not provide the
+data they need, which is stated in the settings rather than hidden.
 
 ---
 
@@ -82,6 +100,7 @@ data than a signed-in one would.
 | `alarms` | Re-check tracked channels on a schedule so growth over time can be shown. Without it, tracking would only update while a YouTube tab is open. |
 | `downloads` | Save thumbnails, transcripts and CSV exports to your computer when you click those buttons. Used only in response to a click. |
 | Host access to `youtube.com`, `studio.youtube.com`, `i.ytimg.com`, `suggestqueries-clients6.youtube.com` | Read public YouTube data to calculate the analytics shown, and load thumbnails. |
+| Optional host access to `www.googleapis.com` | Requested only if you enable the official YouTube Data API and supply your own key. Not granted otherwise. |
 
 Hookrate does not request access to any other website.
 
