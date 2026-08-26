@@ -189,12 +189,55 @@ Fetches YouTube's public search-suggestion list for the keyword research feature
 which shows what related terms people actually search for.
 ```
 
-**Remote code use**
+**Host permission use** — the dashboard asks for one combined justification
+rather than one per host, so paste this in that single field:
 
 ```
-No. The extension executes no remotely hosted code. All logic is contained in the
-submitted package.
+Hookrate displays research and analytics about YouTube channels and videos on
+the pages the user is already viewing, so it needs access to those pages.
+
+www.youtube.com — reads publicly visible channel pages, video pages, captions
+and comments to calculate what is shown: view counts, outlier scores against a
+channel's own median, revenue estimates and monetization signals. These requests
+are made without cookies, so the user's session is never attached to them.
+
+studio.youtube.com — shows a mid-roll ad-break scheduling helper on the user's
+own video pages. It reads the video length displayed on the page and calculates
+suggested timestamps for the user to copy. It does not change any setting.
+
+i.ytimg.com — loads and downloads video thumbnails, which are hosted on that
+domain, for previews and the thumbnail download feature.
+
+suggestqueries-clients6.youtube.com — fetches YouTube's public search-suggestion
+list for the keyword research feature.
+
+www.googleapis.com is an optional permission, requested only if the user chooses
+to read data through the official YouTube Data API with their own API key.
+
+No data is transmitted to any server operated by the developer, because there
+is none.
 ```
+
+**Remote code use**
+
+Select **"No, I am not using remote code"**. If a justification box appears:
+
+```
+The extension executes no remotely hosted code. All logic ships inside the
+package: there is no eval, no new Function, no injected script tags and no
+remote imports. The build script refuses to package if any of those appear.
+```
+
+---
+
+## Publishing limit
+
+A new developer account can have only three published items at a time. If the
+dashboard reports "You have published the maximum allowed number of 3
+extensions", nothing above is wrong — either unpublish an item that is no longer
+needed, or use the "request a limit increase" link the dashboard shows. The
+increase is reviewed by Google and is not instant, so unpublishing is the fast
+path if one of the three is dormant.
 
 ---
 
