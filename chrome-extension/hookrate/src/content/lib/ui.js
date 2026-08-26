@@ -19,7 +19,7 @@
         type: 'button',
         title: 'Collapse',
         'aria-expanded': String(!collapsed),
-        html: '&#9662;',
+        text: '▾',
       });
 
       const head = el('div.hr-panel-head', {}, [

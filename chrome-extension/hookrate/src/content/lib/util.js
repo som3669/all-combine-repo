@@ -82,8 +82,11 @@
 
     for (const [k, v] of Object.entries(attrs)) {
       if (v == null || v === false) continue;
+      // No `html` escape hatch on purpose. Everything this builds goes into a
+      // page alongside untrusted text — video titles, comments, channel names —
+      // so there is no innerHTML anywhere in the extension and no way for a
+      // caller to reintroduce one by accident.
       if (k === 'text') node.textContent = v;
-      else if (k === 'html') node.innerHTML = v;
       else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
       else if (k.startsWith('on') && typeof v === 'function') {
         node.addEventListener(k.slice(2).toLowerCase(), v);

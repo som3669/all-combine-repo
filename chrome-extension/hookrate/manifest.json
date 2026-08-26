@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Hookrate — YouTube Research & Analytics",
+  "name": "Hookrate — Research & Analytics for Creators",
   "short_name": "Hookrate",
   "version": "0.1.0",
-  "description": "Channel analytics, outlier detection, monetization checks, revenue estimates, transcripts and a swipe file — inside YouTube.",
+  "description": "Channel analytics, outlier scoring, monetization checks, revenue estimates, transcripts and a swipe file — shown directly on the pages you already browse.",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
@@ -14,7 +14,8 @@
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://studio.youtube.com/*",
-    "https://i.ytimg.com/*"
+    "https://i.ytimg.com/*",
+    "https://suggestqueries-clients6.youtube.com/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js",
