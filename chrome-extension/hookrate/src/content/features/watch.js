@@ -242,6 +242,81 @@
     }
   }
 
+  /**
+   * Requests + quoted timestamps from this video's comments.
+   * The timestamp buckets are the useful half: several viewers quoting the same
+   * moment means something happened there — a laugh, or a place they got lost.
+   */
+  async function requestsPanel(videoId) {
+    const modal = HR.ui.modal({ title: 'Viewer requests', width: 760 });
+    modal.body.append(HR.ui.skeleton(5, 'Mining comments…'));
+
+    try {
+      const res = await HR.send('video.requests', { videoId, limit: 150 });
+      if (!res.available) {
+        modal.body.replaceChildren(
+          el('div.hr-empty', { text: 'No comments available (disabled, or none yet).' })
+        );
+        return;
+      }
+
+      modal.body.replaceChildren(
+        el('div.hr-note', {
+          text: `${res.sampled} comments scanned · ${res.requests.length} requests · ranked by askers × likes`,
+        }),
+        res.grouped.length
+          ? el('div.hr-subsection', {}, [
+              el('div.hr-subsection-title', { text: 'What viewers are asking for' }),
+              ...res.grouped.map((g) =>
+                el('div.hr-row', {}, [
+                  el('div.hr-row-main', {}, [
+                    el('div.hr-row-title', { text: g.key || '(unlabelled)' }),
+                    el('div.hr-row-meta', {
+                      text: `${g.count}× asked · ${HR.fmt.n(g.likes)} likes · ${g.kind}`,
+                    }),
+                    ...g.examples.map((ex) =>
+                      el('div.hr-comment', {}, [
+                        el('div.hr-comment-head', {
+                          text: `${ex.author} · ${HR.fmt.n(ex.likes)} likes`,
+                        }),
+                        el('div.hr-comment-text', { text: ex.comment }),
+                      ])
+                    ),
+                  ]),
+                  el('div.hr-row-side', {}, [HR.ui.chip(`demand ${g.demand}`, 'good')]),
+                ])
+              ),
+            ])
+          : el('div.hr-empty', { text: 'No requests matched in this comment section.' }),
+        res.timestamps.length
+          ? el('div.hr-subsection', {}, [
+              el('div.hr-subsection-title', { text: 'Moments viewers quoted' }),
+              el('div.hr-note', {
+                text: 'Timestamps appearing in two or more comments, bucketed to 15 seconds. Click to jump.',
+              }),
+              ...res.timestamps.map((t) =>
+                el('div.hr-cue', {}, [
+                  el('button.hr-cue-at', {
+                    type: 'button',
+                    text: t.at,
+                    onclick: () => {
+                      const video = HR.qs('video');
+                      if (video) video.currentTime = t.seconds;
+                    },
+                  }),
+                  el('span.hr-cue-text', {
+                    text: `${t.count} mentions · ${t.examples[0] ? t.examples[0].text : ''}`,
+                  }),
+                ])
+              ),
+            ])
+          : null
+      );
+    } catch (err) {
+      modal.body.replaceChildren(el('div.hr-error', { text: err.message }));
+    }
+  }
+
   async function sponsorPanel(videoId) {
     const modal = HR.ui.modal({ title: 'Sponsorship scan' });
     HR.ui.add(modal.body, HR.ui.skeleton(4, 'Scanning transcript + description…'));
