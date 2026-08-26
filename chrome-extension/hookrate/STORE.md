@@ -1,5 +1,41 @@
 # Chrome Web Store submission pack
 
+## Building and testing the upload
+
+```
+npm install                 # dev tooling only; nothing here ships
+npm run build               # validates, then writes dist/hookrate-<version>.zip
+npm run check               # validate without writing anything
+
+npm run chrome              # one-time: fetch Chrome for Testing
+node tool/smoke.mjs --chrome "<path from the line above>"
+```
+
+`tool/build.mjs` ships only `manifest.json`, `src/` and `assets/icons/`. The
+store copy, the privacy policy source, the screenshots and this tooling stay
+out: reviewers read what you upload, and every extra file is either noise or a
+question to answer.
+
+Before writing the zip it checks the things that actually get submissions
+rejected — every manifest-referenced file present, every relative import
+resolving, no `eval`, no `innerHTML`, no `debugger`, no host contacted in code
+that is missing from `host_permissions`, and the name and description inside
+their character limits. It refuses to package if any of those fail. The
+description limit is not theoretical: it caught a 154-character description that
+would have been rejected on submission.
+
+`tool/smoke.mjs` runs the built package — `dist/package`, the exact staged
+contents — against live YouTube and exercises the channel panel, all three
+modals, the watch panel, the search bar and the three extension pages. It also
+asserts no `null`/`undefined`/`NaN` reaches the screen and that search results
+are not squeezed by the injected bar, both of which are bugs that shipped once.
+
+Note that ordinary Chrome cannot host this test: Chrome 137 refuses
+`--load-extension`, and the flag that re-enabled it is gone by 151. Chrome for
+Testing keeps the automation switches on, which is what `npm run chrome`
+fetches.
+
+
 Everything the dashboard asks for, written out. Copy each block into the matching
 field. Nothing here should be improvised at submission time — the review process
 compares what you type against what the code does, and inconsistencies between
@@ -21,10 +57,11 @@ Hookrate — Research & Analytics for Creators
 > description below states compatibility instead, which is the accepted way to
 > say it.
 
-**Short description** (132 char limit)
+**Short description** (132 char limit — this is also `description` in the
+manifest, and `tool/build.mjs` refuses to package if it goes over)
 
 ```
-Channel analytics, outlier scoring, monetization checks and revenue estimates, shown on the pages you already browse.
+Channel analytics, outlier scoring, monetization checks and revenue estimates, on the pages you already browse.
 ```
 
 **Category:** Productivity (Tools)

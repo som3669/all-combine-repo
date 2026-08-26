@@ -1,0 +1,19 @@
+{
+  "name": "hookrate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build and test tooling for the Hookrate extension. Not shipped in the package.",
+  "type": "module",
+  "scripts": {
+    "build": "node tool/build.mjs",
+    "check": "node tool/build.mjs --check",
+    "smoke": "node tool/smoke.mjs",
+    "chrome": "npx @puppeteer/browsers install chrome@stable"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

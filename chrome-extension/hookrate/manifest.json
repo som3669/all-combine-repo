@@ -3,7 +3,7 @@
   "name": "Hookrate — Research & Analytics for Creators",
   "short_name": "Hookrate",
   "version": "0.1.0",
-  "description": "Channel analytics, outlier scoring, monetization checks, revenue estimates, transcripts and a swipe file — shown directly on the pages you already browse.",
+  "description": "Channel analytics, outlier scoring, monetization checks and revenue estimates, on the pages you already browse.",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
