@@ -201,12 +201,31 @@ and the tracker — exists to serve that single purpose.
 
 ---
 
-## Assets still needed
+## Assets
 
-- [ ] At least one screenshot, 1280x800 or 640x400 — the channel analytics panel
-      on a real channel is the strongest first image
-- [ ] Optional: small promo tile 440x280
-- [ ] Store icon 128x128 — already in `assets/icons/icon128.png`
+- [x] Store icon 128x128 — `assets/icons/icon128.png`
+- [x] Small promo tile 440x280 — `assets/store/promo-small-440x280.png`
+- [x] Marquee promo tile 1400x560 — `assets/store/promo-marquee-1400x560.png`
+- [ ] **Screenshots, 1280x800 — you have to capture these yourself**
+
+Screenshots must show the extension actually running. A mocked-up image would
+be a misrepresentation of functionality, which is exactly what the "Be Honest"
+policy removes extensions for, so they cannot be generated ahead of time.
+
+Capture these four, in this order — the first is the one most people judge the
+listing on:
+
+1. **Channel analytics panel** on a large, well-known channel, with the
+   monetization badge visible next to the channel name. Pick a channel whose
+   numbers are impressive enough to be legible at thumbnail size.
+2. **Formats modal**, showing title-pattern lift and the detected template.
+3. **Watch page sidebar**, showing the outlier multiplier and the stat grid.
+4. **Earn more / revenue advice modal**, showing ranked recommendations with
+   their impact estimates.
+
+Set the browser window so the captured area is 1280x800, use the dark theme
+(the panels were designed against it), and avoid capturing your own subscriber
+counts or Studio pages if you would rather not publish them.
 
 ---
 
@@ -229,11 +248,12 @@ RPM, transcript or outlier data the extension is built on.
 is the piece most easily argued to be a separate product. If review pushes back
 on single purpose, that is the part to drop first.
 
-**3. `tryAutoPlace` in the Studio module** clicks YouTube's own automatic
-ad-placement control on the user's behalf. It is the highest-risk, lowest-value
-code in the package. Consider removing it before submission; the timestamp
-calculator that sits beside it delivers most of the value with none of the
-exposure.
+**3. ~~`tryAutoPlace` in the Studio module~~ — removed.** It searched Studio for
+its own automatic ad-placement control and clicked it. Synthesising clicks inside
+a form that governs the user's earnings, against an unversioned DOM that would
+rot silently, was the riskiest code in the package for the least benefit. The
+timestamp calculator beside it does the same job and the person clicks. The
+extension now performs no synthetic clicks on any YouTube surface.
 
 **4. Estimates must stay labelled.** The store removes extensions that "deceive
 or mislead users". Revenue, RPM and monetization figures are inferred, and the

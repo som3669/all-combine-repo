@@ -43,20 +43,14 @@
     return text.split(':').map(Number).reduce((a, b) => a * 60 + b, 0);
   }
 
-  /** Best-effort click on Studio's own automatic-placement control. */
-  function tryAutoPlace() {
-    const candidates = [...document.querySelectorAll('button, tp-yt-paper-button, ytcp-button')];
-    const target = candidates.find((b) =>
-      /place\s*(ad\s*breaks?)?\s*automatically|auto[- ]?place/i.test(b.textContent || '')
-    );
-    if (!target) {
-      HR.ui.toast('Studio’s automatic-placement button is not on this page', { kind: 'bad' });
-      return false;
-    }
-    target.click();
-    HR.ui.toast('Clicked Studio’s automatic placement', { kind: 'good' });
-    return true;
-  }
+  // There was a "try auto-place" button here that searched Studio for its own
+  // automatic-placement control and clicked it. It is gone deliberately.
+  //
+  // Synthesising clicks inside a monetisation form is the riskiest thing this
+  // extension could do for the least benefit: Studio's DOM is unversioned, so
+  // the selector would rot silently, and a mis-click lands in a form that
+  // governs the user's earnings. The scheduler below computes the same
+  // timestamps and lets the person place them, which is a click either way.
 
   function panelBody(lengthSec) {
     const everySec = el('input.hr-input', { type: 'number', value: '240', min: '60' });
@@ -90,13 +84,10 @@
           const current = compute();
           HR.ui.copy(current.map(stamp).join('\n'), `${current.length} timestamps copied`);
         }, { kind: 'solid' }),
-        HR.ui.button('Try auto-place', tryAutoPlace, {
-          title: 'Clicks Studio’s own control if it is present. Experimental.',
-        }),
       ]),
       out,
       el('div.hr-note.hr-muted', {
-        text: 'Hookrate does not inject breaks directly — Studio has no stable API for that, and faking clicks into a monetisation form is a bad idea. Copy the schedule and place them, or use Studio’s automatic option.',
+        text: 'Hookrate never edits your monetisation settings. It calculates the schedule; you place the breaks. Studio has no stable API for this, and automating clicks inside a form that governs your earnings is not worth the saved second.',
       }),
     ];
   }
