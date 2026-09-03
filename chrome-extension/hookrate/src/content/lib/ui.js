@@ -30,7 +30,15 @@
      * A titled card. Returns { root, body, setBody, setStatus, remove }.
      * Cards are idempotent by `id`: injecting twice replaces, never stacks.
      */
-    panel({ id, title, subtitle, actions = [], collapsible = true, collapsed = false }) {
+    panel({
+      id,
+      title,
+      subtitle,
+      actions = [],
+      collapsible = true,
+      collapsed = false,
+      onToggle = null,
+    }) {
       document.getElementById(id)?.remove();
 
       const body = el('div.hr-panel-body');
@@ -58,15 +66,36 @@
       if (collapsed) root.classList.add('hr-collapsed');
 
       if (collapsible) {
-        caret.addEventListener('click', () => {
+        const toggle = () => {
           const now = root.classList.toggle('hr-collapsed');
           caret.setAttribute('aria-expanded', String(!now));
-        });
+          caret.title = now ? 'Expand' : 'Collapse';
+          // Let the caller remember the choice, so a panel that starts
+          // collapsed does not re-collapse on every visit once opened.
+          if (onToggle) onToggle(now);
+        };
+
+        caret.addEventListener('click', toggle);
+        caret.title = collapsed ? 'Expand' : 'Collapse';
+
+        // The title area toggles as well. The buttons live in their own
+        // container beside it, so this cannot swallow an action click.
+        const titles = head.querySelector('.hr-panel-titles');
+        if (titles) {
+          titles.style.cursor = 'pointer';
+          titles.addEventListener('click', toggle);
+        }
       }
+
+      const subtitleNode = head.querySelector('.hr-panel-sub');
 
       return {
         root,
         body,
+        /** Swap the subtitle — used to keep a collapse hint from going stale. */
+        setSubtitle(text) {
+          if (subtitleNode) subtitleNode.textContent = text;
+        },
         setBody(...nodes) {
           body.replaceChildren(...nodes.flat().filter(Boolean));
         },

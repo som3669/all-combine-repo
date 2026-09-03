@@ -67,6 +67,13 @@ const browser = await puppeteer.launch({
     '--mute-audio',
   ],
   defaultViewport: { width: 1280, height: 800 },
+  // A fixed profile directory. Puppeteer deletes its temp profile on close, and
+  // Chrome on Windows still holds a lock on first_party_sets.db when it does,
+  // which throws EBUSY and masks whatever the run actually reported.
+  userDataDir: path.join(ROOT, 'dist', 'chrome-profile'),
+  // Screenshotting a page that is still doing layout work can outrun the
+  // default 30s CDP timeout on a slow lookup.
+  protocolTimeout: 180000,
 });
 
 try {
@@ -227,11 +234,25 @@ try {
       const errs = [];
       p.on('pageerror', (e) => errs.push(String(e).slice(0, 120)));
       await p.goto(base + file, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await sleep(2500);
-      const body = await p.evaluate(() => document.body.innerText.trim().length);
+
+      // Wait for content rather than sleeping a fixed interval. These pages
+      // populate from the service worker, which may still be busy with the
+      // channel work from the earlier steps, and a fixed wait turns that into
+      // a flaky "page rendered empty" failure.
+      let body = 0;
+      try {
+        await p.waitForFunction(() => document.body.innerText.trim().length > 20, {
+          timeout: 30000,
+          polling: 500,
+        });
+        body = await p.evaluate(() => document.body.innerText.trim().length);
+      } catch {
+        body = await p.evaluate(() => document.body.innerText.trim().length);
+      }
+
       await p.close();
       if (errs.length) throw new Error(errs[0]);
-      if (body < 20) throw new Error('page rendered empty');
+      if (body < 20) throw new Error(`page rendered empty (${body} chars)`);
       return `${body} chars of content`;
     });
   }

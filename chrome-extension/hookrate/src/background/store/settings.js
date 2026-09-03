@@ -52,6 +52,9 @@ export const DEFAULTS = {
   ui: {
     compact: false,
     accent: '#ff4d3d',
+    // The channel panel starts collapsed so it does not push YouTube's own
+    // content down on every visit. Set once the user expands it.
+    channelPanelOpen: false,
   },
   privacy: {
     // Server-side lookups hit youtube.com from the extension with no cookies.

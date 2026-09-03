@@ -53,11 +53,20 @@
     return settingsCache;
   };
 
-  HR.saveSettings = async function saveSettings(patch) {
+  /**
+   * @param {object} patch
+   * @param {object} [opts]
+   * @param {boolean} [opts.quiet] Skip the change event, and so the remount it
+   *   triggers. For preferences the UI has already applied itself — a collapse
+   *   toggle should not tear down and refetch the panel it just collapsed.
+   */
+  HR.saveSettings = async function saveSettings(patch, { quiet = false } = {}) {
     settingsCache = null;
     const next = await HR.send('settings.set', { patch });
     settingsCache = Promise.resolve(next);
-    document.dispatchEvent(new CustomEvent('hookrate:settings', { detail: next }));
+    if (!quiet) {
+      document.dispatchEvent(new CustomEvent('hookrate:settings', { detail: next }));
+    }
     return next;
   };
 

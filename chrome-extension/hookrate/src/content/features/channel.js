@@ -957,10 +957,26 @@
 
     if (document.getElementById(PANEL_ID)?.dataset.ref === ref) return;
 
+    // Collapsed by default. The panel sits between the channel header and the
+    // video grid, so leaving it open pushes YouTube's own content down the page
+    // on every visit. Opening it is one click, and the choice is remembered.
+    const settings = await HR.settings();
+    const startCollapsed = settings.ui?.channelPanelOpen !== true;
+
+    const subtitleFor = (isCollapsed) =>
+      isCollapsed ? 'click to expand' : 'estimates from public data';
+
     const panel = HR.ui.panel({
       id: PANEL_ID,
       title: 'Hookrate — channel analytics',
-      subtitle: 'estimates from public data',
+      subtitle: subtitleFor(startCollapsed),
+      collapsed: startCollapsed,
+      onToggle: (isCollapsed) => {
+        // Keep the hint honest rather than leaving "click to expand" on an
+        // already-expanded panel.
+        panel.setSubtitle(subtitleFor(isCollapsed));
+        HR.saveSettings({ ui: { channelPanelOpen: !isCollapsed } }, { quiet: true });
+      },
     });
     panel.root.dataset.ref = ref;
     panel.loading('Reading channel…');
