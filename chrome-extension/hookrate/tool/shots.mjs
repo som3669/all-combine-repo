@@ -23,8 +23,13 @@ const OUT = path.join(ROOT, 'assets', 'store', 'screenshots');
 const argChrome = process.argv.indexOf('--chrome');
 const CHROME = argChrome > -1 ? process.argv[argChrome + 1] : process.env.CHROME_FOR_TESTING;
 
-const CHANNEL = 'https://www.youtube.com/@LIVCrime/videos?hl=en&gl=US';
-const VIDEO = 'https://www.youtube.com/watch?v=KdrG-qR6-co&hl=en&gl=US';
+// The hero channel. Big, well-known numbers read better at thumbnail size than
+// a small channel's do, and the panel is the same either way.
+//   node tool/shots.mjs --channel @SomeoneElse
+const argChannel = process.argv.indexOf('--channel');
+const HANDLE = argChannel > -1 ? process.argv[argChannel + 1] : '@MrBeast';
+const CHANNEL = `https://www.youtube.com/${HANDLE}/videos?hl=en&gl=US`;
+
 const VIEWPORT = { width: 1280, height: 800, deviceScaleFactor: 1 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -134,22 +139,29 @@ try {
     document.querySelector('#hr-channel-panel')?.scrollIntoView({ block: 'center' })
   );
   await sleep(800);
-  await shoot(page, '1-channel-analytics', 'channel analytics with live numbers');
+  await shoot(page, 'hookrate-1-channel-analytics', 'channel analytics with live numbers');
 
   await openModal(page, 'Formats');
-  await shoot(page, '2-formats', 'format clustering, lift vs channel median');
+  await shoot(page, 'hookrate-2-formats', 'format clustering, lift vs channel median');
   await closeModal(page);
 
   await openModal(page, 'Earn more|Get monetized|Monetization plan');
-  await shoot(page, '3-revenue-advice', 'ranked revenue recommendations');
+  await shoot(page, 'hookrate-3-revenue-advice', 'ranked revenue recommendations');
   await closeModal(page);
 
+  // Take the watch-page shot on a video from the same channel, picked off the
+  // page itself. A hardcoded id rots the moment that video is unlisted.
   console.log('watch page');
-  await page.goto(VIDEO, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  const videoUrl = await page.evaluate(() => {
+    const a = document.querySelector('ytd-rich-item-renderer a[href*="/watch?v="]');
+    return a ? new URL(a.getAttribute('href'), location.origin).href : null;
+  });
+  if (!videoUrl) throw new Error('could not find a video link on the channel page');
+  await page.goto(`${videoUrl}&hl=en&gl=US`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await forceDark(page);
   await panelReady(page, '#hr-watch-panel');
   await sleep(1200);
-  await shoot(page, '4-watch-panel', 'watch stats with the outlier multiplier');
+  await shoot(page, 'hookrate-4-watch-panel', 'watch stats with the outlier multiplier');
 
   console.log(`\ncaptured ${shots.length} screenshots to assets/store/screenshots/`);
   console.log('note: the store wants 24-bit PNG with no alpha; these are already RGB.');
