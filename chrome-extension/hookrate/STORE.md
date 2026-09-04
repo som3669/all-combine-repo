@@ -329,17 +329,32 @@ and the tracker — exists to serve that single purpose.
 
 Upload them in this order; the first is the one most people judge the listing on:
 
-1. `hookrate-1-channel-analytics.png` — the panel on a 29M-subscriber channel, with the
+1. `hookrate-1-channel-analytics.png` — the panel on a large channel, with the
    monetization badge beside the channel name
 2. `hookrate-2-formats.png` — format clustering, with the detected title template
 3. `hookrate-3-revenue-advice.png` — ranked recommendations and their impact estimates
 4. `hookrate-4-watch-panel.png` — watch page stats and the outlier multiplier
+5. `hookrate-5-monetization.png` — the monetization verdict and the evidence
+   behind it: thresholds, sampled videos and the YPP surfaces found
 
 These are captures of the extension actually running against live YouTube,
-produced by `tool/smoke.mjs`'s sibling harness rather than mocked up. That
-distinction matters: a fabricated screenshot misrepresents functionality, which
-is what the "Be Honest" policy removes extensions for. Re-capture after any UI
-change so the listing never shows something the extension no longer does.
+produced by `tool/shots.mjs`, `tool/smoke.mjs`'s sibling harness, rather than
+mocked up. That distinction matters: a fabricated screenshot misrepresents
+functionality, which is what the "Be Honest" policy removes extensions for.
+Re-capture after any UI change so the listing never shows something the
+extension no longer does:
+
+```
+node tool/build.mjs
+node tool/shots.mjs --chrome "<path to Chrome for Testing>"
+```
+
+The host channel's identity is blurred before capture — its header, the video
+grid, the masthead and any video ids our own panel prints. The numbers stay
+sharp, since they are what the screenshot sells, but no real creator's name,
+avatar or branding appears in the listing implying an endorsement that does not
+exist. `--no-redact` turns that off; the script refuses to capture if the blur
+did not land.
 
 ---
 
