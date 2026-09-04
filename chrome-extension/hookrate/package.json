@@ -1,6 +1,6 @@
 {
   "name": "hookrate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Build and test tooling for the Hookrate extension. Not shipped in the package.",
   "type": "module",
