@@ -323,13 +323,33 @@
         // styles alone rather than collapsing to nothing.
         if (!ref.width) return;
 
-        const parent = target.offsetParent || target.parentElement;
-        const base = parent ? parent.getBoundingClientRect() : { left: 0 };
+        const parent = target.parentElement;
+        if (!parent) return;
+
+        // margin-left is resolved against the containing block — the PARENT's
+        // content box — not against offsetParent, which is whatever ancestor
+        // happens to be positioned and is usually further out and wider. Using
+        // offsetParent here pushed the bar right by the parent's own indent and
+        // left it hanging off the column.
+        const box = parent.getBoundingClientRect();
+        const cs = getComputedStyle(parent);
+        const padLeft = parseFloat(cs.paddingLeft) || 0;
+        const padRight = parseFloat(cs.paddingRight) || 0;
+        const borderLeft = parseFloat(cs.borderLeftWidth) || 0;
+        const contentLeft = box.left + borderLeft + padLeft;
+        const available = parent.clientWidth - padLeft - padRight;
+        if (available <= 0) return;
+
+        // Never let a stale or oversized reference push us past the column we
+        // sit in: a bar wider than its parent overflows the page, and a
+        // negative offset slides it under the sidebar.
+        const width = Math.min(Math.round(ref.width), Math.round(available));
+        const offset = Math.max(0, Math.min(Math.round(ref.left - contentLeft), Math.round(available - width)));
 
         target.style.boxSizing = 'border-box';
-        target.style.width = `${Math.round(ref.width)}px`;
+        target.style.width = `${width}px`;
         target.style.maxWidth = '100%';
-        target.style.marginLeft = `${Math.round(ref.left - base.left)}px`;
+        target.style.marginLeft = `${offset}px`;
         target.style.marginRight = 'auto';
       };
 
@@ -338,7 +358,7 @@
 
       const ro = new ResizeObserver(sync);
       ro.observe(reference);
-      if (target.offsetParent) ro.observe(target.offsetParent);
+      if (target.parentElement) ro.observe(target.parentElement);
       window.addEventListener('resize', sync);
 
       return () => {

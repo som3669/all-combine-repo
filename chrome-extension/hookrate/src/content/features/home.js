@@ -306,10 +306,13 @@
         if (grid) HR.ui.insertAbove(node, grid);
         else anchor.insertAdjacentElement('afterbegin', node);
 
-        // Match the grid's measured box so the bar lines up with the cards
-        // instead of guessing at YouTube's content width.
+        // Match the grid's OUTER box, not its #contents. The rich grid centres
+        // a whole number of cards inside itself, so #contents is narrower than
+        // the column on wide viewports and shifted within it — copying it left
+        // the bar visibly short of the chip row above it. The renderer's own
+        // box is the column, which is what the chip row spans.
         stopAligning?.();
-        const reference = HR.qs('ytd-rich-grid-renderer #contents') || grid;
+        const reference = grid || HR.qs('ytd-rich-grid-renderer');
         if (reference) stopAligning = HR.ui.alignTo(node, reference);
       }
       apply();
