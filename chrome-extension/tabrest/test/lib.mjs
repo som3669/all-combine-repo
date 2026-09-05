@@ -66,7 +66,9 @@ export async function launch(opts = {}) {
     args: [
       `--disable-extensions-except=${EXT}`,
       `--load-extension=${EXT}`,
-      "--no-first-run"
+      "--no-first-run",
+      // CI runners have no usable Chrome sandbox and a small /dev/shm.
+      ...(process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : [])
     ],
     ...opts
   });
