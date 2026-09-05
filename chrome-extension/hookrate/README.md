@@ -115,6 +115,9 @@ than breaking every panel.
 - Permissions: `storage`, `alarms`, `downloads` (thumbnails, CSV, transcripts).
   Host access is limited to `www.youtube.com`, `studio.youtube.com` and
   `i.ytimg.com`.
+- Full policy: https://som3669.github.io/privacy-policy/hookrate/ — source lives
+  in [som3669/privacy-policy](https://github.com/som3669/privacy-policy), not in
+  this repo, so the store URL survives this repo going private.
 
 ## Known limits
 

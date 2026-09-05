@@ -157,4 +157,5 @@ pass validation. Use **Fill with invalid data** when you want the opposite.
 AutoFiller runs entirely on your device and sends no data anywhere. It only
 accesses a page when you trigger a fill (no background access, no broad host
 permissions). Profile data is saved with Chrome’s storage and never transmitted.
-Passwords are never stored. See PRIVACY.md.
+Passwords are never stored. See the
+[privacy policy](https://som3669.github.io/privacy-policy/autofiller/).

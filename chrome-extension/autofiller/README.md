@@ -45,4 +45,5 @@ See MANUAL.md for the full guide.
 
 Everything runs on your device. AutoFiller sends no data anywhere. It only touches
 a page when you trigger it (`activeTab` + `scripting`, no broad host access). See
-PRIVACY.md.
+the [privacy policy](https://som3669.github.io/privacy-policy/autofiller/)
+(source: [som3669/privacy-policy](https://github.com/som3669/privacy-policy)).

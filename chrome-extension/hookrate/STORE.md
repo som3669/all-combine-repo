@@ -12,8 +12,7 @@ node tool/smoke.mjs --chrome "<path from the line above>"
 ```
 
 `tool/build.mjs` ships only `manifest.json`, `src/` and `assets/icons/`. The
-store copy, the privacy policy source, the screenshots and this tooling stay
-out: reviewers read what you upload, and every extra file is either noise or a
+store copy, the screenshots and this tooling stay out: reviewers read what you upload, and every extra file is either noise or a
 question to answer.
 
 Before writing the zip it checks the things that actually get submissions
@@ -264,8 +263,9 @@ transmitted anywhere. The store's own FAQ lists "content scraping" as handling
 user data. The enforcement risk here is asymmetric: under-disclosing is what gets
 items suspended, while disclosing a category the extension genuinely touches
 costs nothing but a line on the listing. Checking it also keeps the form
-consistent with PRIVACY.md, which describes exactly this behaviour — and
-inconsistency between the two is itself a violation.
+consistent with the [published policy](https://som3669.github.io/privacy-policy/hookrate/),
+which describes exactly this behaviour — and inconsistency between the two is
+itself a violation.
 
 Checking it commits the item to the Limited Use requirements, which this code
 already satisfies: the data is used only for the stated purpose, is never
@@ -277,11 +277,23 @@ transferred, is never used for advertising, and no human ever sees it.
 - I do not use or transfer user data for purposes unrelated to my item's single purpose
 - I do not use or transfer user data to determine creditworthiness or for lending purposes
 
-**Privacy policy URL.** Run `node tool/privacy.mjs` to render `PRIVACY.md` into
-`docs/index.html`, then host that. The page is generated rather than
-hand-written so the hosted copy cannot drift from the source — drift between the
-policy, the dashboard disclosures and actual behaviour is itself grounds for
-suspension.
+**Privacy policy URL.**
+
+```
+https://som3669.github.io/privacy-policy/hookrate/
+```
+
+The policy no longer lives in this repo. Its source is
+`src/hookrate.md` in [som3669/privacy-policy](https://github.com/som3669/privacy-policy),
+rendered to committed HTML by that repo's `tool/render.mjs` and served from
+GitHub Pages. Two reasons for the split:
+
+- **The URL survives this repo going private.** A policy hosted out of the
+  product repo 404s the moment that repo is closed, and a dead privacy policy
+  URL is a live compliance problem rather than a broken link.
+- **The page is generated, not hand-written,** so the hosted copy cannot drift
+  from its source. Drift between the policy, the dashboard disclosures and
+  actual behaviour is itself grounds for suspension.
 
 How comparable extensions host theirs:
 
@@ -290,22 +302,13 @@ How comparable extensions host theirs:
 | vidIQ | own domain — `vidiq.com/privacy/` |
 | NexLev | Google Sites — `sites.google.com/.../nexlev-privacy/home` |
 
-Options here, best first:
+**When behaviour changes, the policy edit is a second commit in a second repo.**
+That is the cost of the split. Edit `src/hookrate.md` there, bump its
+**Last updated** line, run `node tool/render.mjs`, and commit both the source
+and the regenerated HTML.
 
-1. **GitHub Pages** on the existing public repo. Free, no new account, and the
-   policy sits in version control next to the code it describes, so a behaviour
-   change and a policy change land in the same commit. Enable it under
-   Settings → Pages → deploy from branch `main`, folder `/`, and the URL is
-   `https://som3669.github.io/all-combine-repo/chrome-extension/hookrate/docs/`
-2. **The GitHub file view** of `PRIVACY.md` — works immediately with no setup,
-   but it 404s the moment the repo goes private, and a dead privacy policy URL
-   is a live compliance problem rather than a broken link.
-3. **Google Sites**, which is what NexLev uses. Independent of the repo, but a
-   second place to keep in sync by hand.
-4. **Own domain**, if Hookrate ever gets one. What vidIQ does.
-
-Paste the final URL into the dedicated dashboard field. It must not live only in
-the description.
+Paste the URL into the dedicated dashboard field. It must not live only in the
+description.
 
 ---
 
