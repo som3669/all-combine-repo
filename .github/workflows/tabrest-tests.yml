@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+    paths:
+      - "chrome-extension/tabrest/**"
+  pull_request:
+    paths:
+      - "chrome-extension/tabrest/**"
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: chrome-extension/tabrest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The tests drive a real browser: MV3 service workers do not run in
+      # headless mode, so Chrome needs a display. xvfb provides one.
+      - name: Install puppeteer-core and Chrome
+        run: |
+          npm init -y >/dev/null
+          npm install --no-save puppeteer-core@^23 @puppeteer/browsers
+          npx @puppeteer/browsers install chrome@stable > chrome-install.txt
+          echo "CHROME_PATH=$(awk '{print $2}' chrome-install.txt)" >> "$GITHUB_ENV"
+
+      - name: Run regression suite
+        run: xvfb-run --auto-servernum node test/run.mjs
+        env:
+          PUPPETEER_DIR: ${{ github.workspace }}/chrome-extension/tabrest
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-install-log
+          path: chrome-extension/tabrest/chrome-install.txt
+          if-no-files-found: ignore
