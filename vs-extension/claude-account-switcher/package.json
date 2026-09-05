@@ -2,7 +2,7 @@
   "name": "somshrestha-claude-account-switcher",
   "displayName": "Claude Code Account Switcher",
   "description": "Switch between multiple Claude Code accounts without re-signing in. Captures each logged-in account as a named profile and swaps credentials on demand.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "somshrestha",
   "icon": "icon.png",
   "repository": {

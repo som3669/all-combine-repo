@@ -22,20 +22,32 @@ interface Profile {
 }
 
 let statusBar: vscode.StatusBarItem;
+let log: vscode.OutputChannel;
 
-// ---- fs helpers (UTF-8, no BOM; atomic write) ----
-function readJson(file: string): any | null {
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch {
-    return null;
+// ---- fs helpers (UTF-8, no BOM; atomic write; 0600) ----
+
+// Claude Code rewrites .credentials.json on every token refresh. A read that
+// lands mid-write yields a truncated file, so retry before giving up.
+function readJson(file: string, attempts = 3): any | null {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch {
+      /* retry */
+    }
   }
+  return null;
 }
 
 function writeJsonAtomic(file: string, data: any): void {
   const tmp = file + '.tmp-' + process.pid;
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), { encoding: 'utf8' });
-  fs.renameSync(tmp, file); // atomic replace on same volume
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(tmp, file); // atomic replace on same volume
+  } catch (e) {
+    try { fs.unlinkSync(tmp); } catch { /* ignore */ }
+    throw e;
+  }
 }
 
 function ensureProfilesDir(): void {
@@ -61,9 +73,40 @@ function listProfiles(): Profile[] {
   return out;
 }
 
+// ---- Credential validation ----
+// The point of a profile is that restoring it does NOT trigger a re-login. That
+// only holds while the stored refresh token is present and unexpired, so every
+// save and every restore is gated on this check.
+type CredCheck = { ok: boolean; reason?: string; expired?: boolean };
+
+function checkCredentials(creds: any): CredCheck {
+  if (!creds || typeof creds !== 'object') return { ok: false, reason: 'credentials file unreadable' };
+  const o = creds.claudeAiOauth;
+  // Non-OAuth shapes (API key, Bedrock/Vertex) carry no refresh token to validate.
+  if (!o || typeof o !== 'object') {
+    return Object.keys(creds).length > 0
+      ? { ok: true }
+      : { ok: false, reason: 'credentials file is empty' };
+  }
+  const access = typeof o.accessToken === 'string' ? o.accessToken.trim() : '';
+  const refresh = typeof o.refreshToken === 'string' ? o.refreshToken.trim() : '';
+  if (!refresh) return { ok: false, reason: 'no refresh token (signed out or mid-login)' };
+  if (!access) return { ok: false, reason: 'no access token (signed out or mid-login)' };
+  const rExp = typeof o.refreshTokenExpiresAt === 'number' ? o.refreshTokenExpiresAt : 0;
+  if (rExp && rExp <= Date.now()) {
+    return { ok: false, expired: true, reason: 'refresh token expired ' + new Date(rExp).toLocaleString() };
+  }
+  return { ok: true };
+}
+
 function saveProfile(p: Profile): void {
   ensureProfilesDir();
-  writeJsonAtomic(profilePath(p.label), p);
+  const file = profilePath(p.label);
+  // Keep one generation back: a bad save used to be unrecoverable.
+  try {
+    if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak');
+  } catch { /* best effort */ }
+  writeJsonAtomic(file, p);
 }
 
 // ---- Live account read/apply ----
@@ -94,21 +137,33 @@ function buildProfileFromLive(label?: string): Profile | null {
   };
 }
 
-// Re-snapshot the currently-live account into its matching profile so the
-// (rotated) refresh token stays fresh before we switch away from it.
-function refreshCurrentProfileSnapshot(): void {
+function findMatching(profiles: Profile[], email: string, accountUuid: string): Profile | undefined {
+  return profiles.find((p) => (accountUuid && p.accountUuid === accountUuid) || p.email === email);
+}
+
+// Re-snapshot the live account into its matching profile. Claude Code rotates the
+// refresh token on every refresh, so a profile captured once goes stale within
+// hours; restoring that dead token is what forces the login screen.
+// Returns true when the profile was updated.
+function snapshotLiveIntoProfile(reason: string): boolean {
   const live = buildProfileFromLive();
-  if (!live) return;
-  const existing = listProfiles().find(
-    (p) => (live.accountUuid && p.accountUuid === live.accountUuid) || p.email === live.email
-  );
-  if (existing) {
-    existing.credentials = live.credentials;
-    existing.oauthAccount = live.oauthAccount;
-    existing.userID = live.userID;
-    existing.capturedAt = live.capturedAt;
-    saveProfile(existing);
+  if (!live) return false;
+  const check = checkCredentials(live.credentials);
+  if (!check.ok) {
+    // Never overwrite a good profile with signed-out / half-written credentials.
+    log.appendLine('[' + new Date().toISOString() + '] snapshot skipped (' + reason + '): ' + check.reason);
+    return false;
   }
+  const existing = findMatching(listProfiles(), live.email, live.accountUuid);
+  if (!existing) return false;
+  if (JSON.stringify(existing.credentials) === JSON.stringify(live.credentials)) return false;
+  existing.credentials = live.credentials;
+  existing.oauthAccount = live.oauthAccount;
+  existing.userID = live.userID;
+  existing.capturedAt = live.capturedAt;
+  saveProfile(existing);
+  log.appendLine('[' + new Date().toISOString() + '] snapshot saved (' + reason + '): ' + existing.label);
+  return true;
 }
 
 // Write a profile's credentials + identity into the live Claude Code files.
@@ -127,10 +182,13 @@ function applyProfile(p: Profile): void {
 function updateStatusBar(): void {
   const live = readLiveAccount();
   if (live) {
-    statusBar.text = `$(account) ${live.email}`;
-    statusBar.tooltip = `Claude account: ${live.email}\nClick to switch`;
+    const check = checkCredentials(live.credentials);
+    statusBar.text = (check.ok ? '$(account) ' : '$(warning) ') + live.email;
+    statusBar.tooltip = check.ok
+      ? 'Claude account: ' + live.email + '\nClick to switch'
+      : 'Claude account: ' + live.email + '\n' + check.reason + '\nClick to switch';
   } else {
-    statusBar.text = `$(account) Claude: not signed in`;
+    statusBar.text = '$(account) Claude: not signed in';
     statusBar.tooltip = 'No Claude Code credentials found';
   }
   statusBar.show();
@@ -143,6 +201,14 @@ async function cmdCapture(): Promise<void> {
     vscode.window.showErrorMessage('No live Claude Code account found (~/.claude/.credentials.json missing). Sign in first.');
     return;
   }
+  const check = checkCredentials(live.credentials);
+  if (!check.ok) {
+    vscode.window.showErrorMessage(
+      'Cannot capture ' + live.email + ': ' + check.reason +
+      '. Sign in fully, then capture — saving now would store credentials that force a re-login.'
+    );
+    return;
+  }
   const name = await vscode.window.showInputBox({
     prompt: 'Profile name for the current account',
     value: live.email,
@@ -152,7 +218,7 @@ async function cmdCapture(): Promise<void> {
   if (!p) return;
   saveProfile(p);
   updateStatusBar();
-  vscode.window.showInformationMessage(`Captured current account as profile "${name}" (${live.email}).`);
+  vscode.window.showInformationMessage('Captured current account as profile "' + name + '" (' + live.email + ').');
 }
 
 async function cmdSwitch(): Promise<void> {
@@ -170,9 +236,10 @@ async function cmdSwitch(): Promise<void> {
 
   const items: (vscode.QuickPickItem & { profile: Profile })[] = profiles.map((p) => {
     const isCurrent = !!live && ((live.accountUuid && p.accountUuid === live.accountUuid) || p.email === live.email);
+    const check = checkCredentials(p.credentials);
     return {
-      label: (isCurrent ? '$(check) ' : '') + p.label,
-      description: p.email + (isCurrent ? '  (current)' : ''),
+      label: (isCurrent ? '$(check) ' : check.ok ? '' : '$(warning) ') + p.label,
+      description: p.email + (isCurrent ? '  (current)' : '') + (check.ok ? '' : '  — ' + check.reason),
       detail: 'captured ' + p.capturedAt,
       profile: p,
     };
@@ -184,12 +251,24 @@ async function cmdSwitch(): Promise<void> {
   const target = chosen.profile;
   const alreadyCurrent = !!live && ((live.accountUuid && target.accountUuid === live.accountUuid) || target.email === live.email);
   if (alreadyCurrent) {
-    vscode.window.showInformationMessage(`Already on ${target.email}.`);
+    vscode.window.showInformationMessage('Already on ' + target.email + '.');
     return;
   }
 
+  // Applying unusable credentials is exactly what produces the login screen.
+  // Say so up front instead of switching into a broken state.
+  const targetCheck = checkCredentials(target.credentials);
+  if (!targetCheck.ok) {
+    const pick = await vscode.window.showWarningMessage(
+      'Profile "' + target.label + '" cannot sign in: ' + targetCheck.reason + '. Switching will show the login screen.',
+      'Switch Anyway',
+      'Cancel'
+    );
+    if (pick !== 'Switch Anyway') return;
+  }
+
   try {
-    refreshCurrentProfileSnapshot(); // keep outgoing account's tokens fresh
+    snapshotLiveIntoProfile('switching away'); // keep outgoing account's tokens fresh
     applyProfile(target);
   } catch (e: any) {
     vscode.window.showErrorMessage('Switch failed: ' + (e?.message || String(e)));
@@ -207,16 +286,19 @@ async function cmdManage(): Promise<void> {
     vscode.window.showInformationMessage('No profiles saved.');
     return;
   }
-  const items: (vscode.QuickPickItem & { profile: Profile })[] = profiles.map((p) => ({
-    label: p.label,
-    description: p.email,
-    detail: 'captured ' + p.capturedAt,
-    profile: p,
-  }));
+  const items: (vscode.QuickPickItem & { profile: Profile })[] = profiles.map((p) => {
+    const check = checkCredentials(p.credentials);
+    return {
+      label: (check.ok ? '' : '$(warning) ') + p.label,
+      description: p.email + (check.ok ? '' : '  — ' + check.reason),
+      detail: 'captured ' + p.capturedAt,
+      profile: p,
+    };
+  });
   const chosen = await vscode.window.showQuickPick(items, { placeHolder: 'Pick a profile to delete' });
   if (!chosen) return;
   const confirm = await vscode.window.showWarningMessage(
-    `Delete profile "${chosen.profile.label}"? Stored credentials for ${chosen.profile.email} will be removed.`,
+    'Delete profile "' + chosen.profile.label + '"? Stored credentials for ' + chosen.profile.email + ' will be removed.',
     { modal: true },
     'Delete'
   );
@@ -226,10 +308,13 @@ async function cmdManage(): Promise<void> {
   } catch {
     /* ignore */
   }
-  vscode.window.showInformationMessage(`Deleted profile "${chosen.profile.label}".`);
+  vscode.window.showInformationMessage('Deleted profile "' + chosen.profile.label + '".');
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  log = vscode.window.createOutputChannel('Claude Account Switcher');
+  context.subscriptions.push(log);
+
   statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
   statusBar.command = 'claude-account-switcher.switch';
   context.subscriptions.push(statusBar);
@@ -243,10 +328,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // Auto-capture the current account on first run so there's always a return path.
   try {
     const live = readLiveAccount();
-    if (live) {
-      const known = listProfiles().some(
-        (p) => (live.accountUuid && p.accountUuid === live.accountUuid) || p.email === live.email
-      );
+    if (live && checkCredentials(live.credentials).ok) {
+      const known = !!findMatching(listProfiles(), live.email, live.accountUuid);
       if (!known) {
         const p = buildProfileFromLive();
         if (p) saveProfile(p);
@@ -258,17 +341,45 @@ export function activate(context: vscode.ExtensionContext): void {
 
   updateStatusBar();
 
-  // Keep the bar in sync if credentials change under us.
+  // Keep the bar in sync AND mirror rotated tokens back into the active profile.
+  // Without this a profile only ever holds the token from the last switch, which
+  // Claude Code has since rotated away — dead on restore.
   try {
+    let timer: NodeJS.Timeout | undefined;
     const watcher = fs.watch(CLAUDE_DIR, (_e, file) => {
-      if (file === '.credentials.json') updateStatusBar();
+      if (file !== '.credentials.json') return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        try {
+          snapshotLiveIntoProfile('token rotated');
+        } catch (e: any) {
+          log.appendLine('snapshot failed: ' + (e?.message || String(e)));
+        }
+        updateStatusBar();
+      }, 1500); // let Claude Code finish writing
     });
-    context.subscriptions.push({ dispose: () => watcher.close() });
+    context.subscriptions.push({
+      dispose: () => {
+        if (timer) clearTimeout(timer);
+        watcher.close();
+      },
+    });
   } catch {
     /* watch is best-effort */
   }
+
+  // Safety net: snapshot on window close, in case the watcher missed a write.
+  context.subscriptions.push({
+    dispose: () => {
+      try { snapshotLiveIntoProfile('shutdown'); } catch { /* ignore */ }
+    },
+  });
 }
 
 export function deactivate(): void {
-  // nothing
+  try {
+    snapshotLiveIntoProfile('deactivate');
+  } catch {
+    /* ignore */
+  }
 }

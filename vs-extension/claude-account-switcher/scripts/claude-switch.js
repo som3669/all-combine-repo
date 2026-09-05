@@ -22,13 +22,41 @@ const CREDENTIALS_FILE = path.join(CLAUDE_DIR, '.credentials.json');
 const CONFIG_FILE = path.join(HOME, '.claude.json');
 const PROFILES_DIR = path.join(CLAUDE_DIR, 'account-switcher');
 
-function readJson(file) {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+// Claude Code rewrites .credentials.json on every token refresh; a read landing
+// mid-write yields a truncated file, so retry before giving up.
+function readJson(file, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* retry */ }
+  }
+  return null;
 }
 function writeJsonAtomic(file, data) {
   const tmp = file + '.tmp-' + process.pid;
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), { encoding: 'utf8' });
-  fs.renameSync(tmp, file);
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), { encoding: 'utf8', mode: 0o600 });
+    fs.renameSync(tmp, file);
+  } catch (e) {
+    try { fs.unlinkSync(tmp); } catch { /* ignore */ }
+    throw e;
+  }
+}
+
+// A profile is only useful if restoring it avoids a re-login, which holds only
+// while the stored refresh token is present and unexpired. Gate every save and
+// every restore on this.
+function checkCredentials(creds) {
+  if (!creds || typeof creds !== 'object') return { ok: false, reason: 'credentials file unreadable' };
+  const o = creds.claudeAiOauth;
+  if (!o || typeof o !== 'object') {
+    return Object.keys(creds).length > 0 ? { ok: true } : { ok: false, reason: 'credentials file is empty' };
+  }
+  const access = typeof o.accessToken === 'string' ? o.accessToken.trim() : '';
+  const refresh = typeof o.refreshToken === 'string' ? o.refreshToken.trim() : '';
+  if (!refresh) return { ok: false, reason: 'no refresh token (signed out or mid-login)' };
+  if (!access) return { ok: false, reason: 'no access token (signed out or mid-login)' };
+  const rExp = typeof o.refreshTokenExpiresAt === 'number' ? o.refreshTokenExpiresAt : 0;
+  if (rExp && rExp <= Date.now()) return { ok: false, reason: 'refresh token expired ' + new Date(rExp).toLocaleString() };
+  return { ok: true };
 }
 function ensureProfilesDir() {
   if (!fs.existsSync(PROFILES_DIR)) fs.mkdirSync(PROFILES_DIR, { recursive: true });
@@ -47,7 +75,12 @@ function listProfiles() {
   out.sort((a, b) => a.label.localeCompare(b.label));
   return out;
 }
-function saveProfile(p) { ensureProfilesDir(); writeJsonAtomic(profilePath(p.label), p); }
+function saveProfile(p) {
+  ensureProfilesDir();
+  const file = profilePath(p.label);
+  try { if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak'); } catch { /* best effort */ }
+  writeJsonAtomic(file, p);
+}
 
 function readLiveAccount() {
   const creds = readJson(CREDENTIALS_FILE);
@@ -80,6 +113,12 @@ function sameAccount(live, p) {
 function refreshCurrentProfileSnapshot() {
   const live = buildProfileFromLive();
   if (!live) return;
+  const check = checkCredentials(live.credentials);
+  if (!check.ok) {
+    // Never overwrite a good profile with signed-out / half-written credentials.
+    console.error('Warning: not snapshotting ' + live.email + ' (' + check.reason + '); keeping the stored copy.');
+    return;
+  }
   const existing = listProfiles().find((p) => sameAccount(live, p));
   if (existing) {
     existing.credentials = live.credentials;
@@ -109,6 +148,12 @@ function ask(q) {
 
   if (flag('--capture')) {
     if (!live) { console.error('No live Claude Code account (~/.claude/.credentials.json missing). Sign in first.'); process.exit(1); }
+    const liveCheck = checkCredentials(live.credentials);
+    if (!liveCheck.ok) {
+      console.error('Cannot capture ' + live.email + ': ' + liveCheck.reason + '.');
+      console.error('Sign in fully first — capturing now would store credentials that force a re-login.');
+      process.exit(1);
+    }
     const name = args.find((a) => !a.startsWith('--')) || live.email;
     saveProfile(buildProfileFromLive(name));
     console.log(`Captured current account as profile "${name}" (${live.email}).`);
@@ -120,7 +165,10 @@ function ask(q) {
   if (flag('--list')) {
     console.log('Current: ' + (live ? live.email : 'not signed in'));
     console.log('Profiles:');
-    for (const p of profiles) console.log(`  ${sameAccount(live, p) ? '*' : ' '} ${p.label.padEnd(30)} ${p.email}`);
+    for (const p of profiles) {
+      const c = checkCredentials(p.credentials);
+      console.log(`  ${sameAccount(live, p) ? '*' : ' '} ${p.label.padEnd(30)} ${p.email}${c.ok ? '' : '  [BROKEN: ' + c.reason + ']'}`);
+    }
     return;
   }
 
@@ -143,6 +191,16 @@ function ask(q) {
   }
 
   if (sameAccount(live, target)) { console.log(`Already on ${target.email}.`); return; }
+
+  // Applying unusable credentials is exactly what produces the login screen.
+  const targetCheck = checkCredentials(target.credentials);
+  if (!targetCheck.ok) {
+    console.error(`Profile "${target.label}" cannot sign in: ${targetCheck.reason}.`);
+    if (!flag('--force')) {
+      console.error('Switching would show the login screen. Re-run with --force to switch anyway.');
+      process.exit(1);
+    }
+  }
 
   try {
     refreshCurrentProfileSnapshot();

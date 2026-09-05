@@ -1,6 +1,0 @@
-node_modules/
-.env
-fetcher/last_response.json
-.wrangler/
-fetcher/run_fetch.cmd
-fetcher/fetch.log
