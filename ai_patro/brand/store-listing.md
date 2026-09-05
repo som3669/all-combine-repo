@@ -58,7 +58,9 @@ muhurat, date converter, widget - works fully offline without a key.
 PRIVACY
 
 No account required. No personal data collected. Your API key is stored only
-on your device.
+on your device. The AI features send your request text to Groq to be answered;
+everything else runs offline. Full policy:
+https://som3669.github.io/privacy-policy/ai-patro/
 ```
 
 ## What's new (500)
@@ -83,6 +85,17 @@ Screenshot order: `01-calendar`, `04-tithi-patro`, `02-panchang`, `05-muhurat`,
 
 ## Also fix in Console
 
+- **Privacy policy URL**: `https://som3669.github.io/privacy-policy/ai-patro/`
+  Source is `src/ai-patro.md` in github.com/som3669/privacy-policy, rendered to
+  HTML and served from GitHub Pages. Hosted there rather than from this repo so
+  the URL stays reachable even though this repo is private -- a dead privacy
+  policy URL is a compliance problem, not a broken link. The in-app copy in
+  `lib/presentation/widgets/privacy_policy_screen.dart` must be edited in the
+  same change as that source.
+- **App content -> Data safety**: the AI features POST request text to
+  api.groq.com, so the form has to disclose that app activity / user-entered
+  text is transferred to a third party for app functionality. Declaring nothing
+  is transferred contradicts the policy and the code.
 - **App content -> Ads**: the listing currently says "Contains ads". The project
   has no ads SDK (no admob, google_mobile_ads, applovin, unity_ads). Set this to
   "No, my app does not contain ads" or the declaration is inaccurate.
