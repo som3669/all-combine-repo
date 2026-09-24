@@ -1,4 +1,19 @@
-storePassword=YOUR_STORE_PASSWORD
+# Copy this file to key.properties (same folder) and fill in the two passwords.
+# key.properties is gitignored -- it never leaves this machine.
+#
+# History: the original upload key was android/keystore/aipatro-release.jks,
+# alias "aipatro", SHA-1 50:2E:96:EE:F5:98:34:A9:C6:49:15:E1:40:8A:D6:56:44:7F:6C:F4.
+# It lived inside the project folder and was lost when that folder was deleted.
+# Keep the replacement outside the repo -- the path below is deliberate.
+#
+# The replacement key is pending an upload key reset in Play Console
+# (Protected with Play -> App signing). Until Google approves it, a bundle
+# signed with it is rejected. Approval shows up as the registered upload SHA-1
+# changing to FC:BA:43:A5:0B:9E:2A:0C:59:7B:6C:6F:23:12:35:17:6B:24:1B:53.
+#
+# Once key.properties exists, `.\tool\release.ps1` builds and verifies the AAB.
+
+storePassword=YOUR_KEYSTORE_PASSWORD
 keyPassword=YOUR_KEY_PASSWORD
-keyAlias=aipatro
-storeFile=../keystore/aipatro-release.jks
+keyAlias=ai-patro-upload
+storeFile=C:/Users/som/Documents/Android-Keys/ai-patro-upload.jks

@@ -43,18 +43,14 @@ class AppDrawer extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.calendar_month,
-                    color: AppTheme.primary,
-                    size: 32,
+                // App logo, not a stock Material glyph — the badge art is
+                // circular, so clip it rather than boxing it in a white square.
+                ClipOval(
+                  child: Image.asset(
+                    'assets/icon/app_icon.png',
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -318,7 +314,7 @@ class AppDrawer extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'AI Patro v1.2.3',
+              'AI Patro v1.2.4',
               style: TextStyle(fontSize: 11, color: Colors.grey[400]),
             ),
           ),
@@ -342,7 +338,7 @@ class AppDrawer extends ConsumerWidget {
     showAboutDialog(
       context: context,
       applicationName: 'AI Patro',
-      applicationVersion: '1.2.3',
+      applicationVersion: '1.2.4',
       applicationIcon: const Icon(Icons.calendar_month,
           color: AppTheme.primary, size: 40),
       children: [

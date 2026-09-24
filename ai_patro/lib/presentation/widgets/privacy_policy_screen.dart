@@ -86,7 +86,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             _section(
               'Third Parties',
-              'AI Patro does not use analytics, advertising SDKs, or tracking libraries. '
+              'AI Patro does not use analytics or tracking libraries, and no advertising '
+              'SDK is present in this version. '
               'Two third parties receive requests: GitHub, which serves the remote holiday '
               'data, and Groq, which serves the AI features. Each provider\'s own privacy '
               'policy applies to requests made to their servers.',
