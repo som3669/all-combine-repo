@@ -22,6 +22,7 @@ this whole tree.
 | `deepa-portfolio/` | Next.js portfolio site on Vercel | deepa688/portfolio (SSH alias `github-deepa`) |
 | `privacy-policy/` | GitHub Pages privacy policies for the apps/extensions | som3669/privacy-policy |
 | `accessproof-site/` | Gutenberg marketing pages for the AccessProof plugin | this repo |
+| `sunau/` | Sunau notification translator/announcer (Flutter + Kotlin), pre-Play | som3669/sunau (private) |
 
 ## Rules that apply everywhere
 
