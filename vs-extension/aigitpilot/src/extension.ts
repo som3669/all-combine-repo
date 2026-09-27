@@ -1,649 +1,593 @@
 import * as vscode from 'vscode';
-import * as cp from 'child_process';
-import * as https from 'https';
-import * as http from 'http';
-import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
+import {
+  DEFAULT_EXCLUDES, DEFAULT_MODEL, KEY_SETTING, KeyedProvider, MODEL_SETTING, PROVIDERS,
+  cfg, currentProvider, getApiKey, initSecrets, migrateKeysToSecrets, promptSettings, providerSettings, storeApiKey,
+} from './config';
+import { collectChanges, git, repoContext } from './diff';
+import * as hook from './hook';
+import { cleanMessage, systemPrompt, userPrompt } from './prompt';
+import { PROVIDER_LABEL, ProviderError, ProviderId, ProviderSettings, complete, listModels } from './providers';
 
-// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let ctx: vscode.ExtensionContext;
+/** The last message put in each repository's commit box, so it is not mistaken for a draft. */
+const lastGenerated = new Map<string, string>();
+/** Set while installing or removing the hook, so the settings listener stays out of the way. */
+let hookBusy = false;
 
-function readConfigFile(): Record<string, unknown> {
-  try {
-    const f = path.join(os.homedir(), '.config', 'aigitpilot', 'config.json');
-    return JSON.parse(fs.readFileSync(f, 'utf8'));
-  } catch { return {}; }
+const errText = (err: unknown) => err instanceof Error ? err.message : String(err);
+const isCancel = (err: unknown) => err instanceof ProviderError && err.kind === 'cancelled';
+
+// ── repository ────────────────────────────────────────────────────────────────
+
+interface GitRepository { rootUri: vscode.Uri; inputBox: { value: string }; ui?: { selected: boolean } }
+interface GitAPI { repositories: GitRepository[]; getRepository(uri: vscode.Uri): GitRepository | null }
+
+async function gitApi(): Promise<GitAPI | undefined> {
+  const ext = vscode.extensions.getExtension<{ getAPI(version: 1): GitAPI }>('vscode.git');
+  if (!ext) { return undefined; }
+  try { return (ext.isActive ? ext.exports : await ext.activate()).getAPI(1); }
+  catch { return undefined; }   // the git extension is disabled
 }
 
-function cfg<T>(key: string, fallback: T): T {
-  const vsVal = vscode.workspace.getConfiguration('aigitpilot').get<T>(key);
-  if (vsVal !== undefined && vsVal !== '' && vsVal !== null) { return vsVal; }
-  const fileVal = readConfigFile()[key] as T;
-  if (fileVal !== undefined && fileVal !== '' && fileVal !== null) { return fileVal; }
-  return fallback;
-}
-
-function exec(cmd: string, cwd?: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    cp.exec(cmd, { cwd, maxBuffer: 1024 * 1024 * 10 }, (err, stdout, stderr) => {
-      if (err) { reject(new Error(stderr || err.message)); return; }
-      resolve(stdout);
-    });
-  });
-}
-
-function httpPost(url: string, body: object, headers: Record<string, string>): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const parsed = new URL(url);
-    const isHttps = parsed.protocol === 'https:';
-    const options = {
-      hostname: parsed.hostname,
-      port: parsed.port || (isHttps ? 443 : 80),
-      path: parsed.pathname + parsed.search,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), ...headers },
-    };
-    const mod = isHttps ? https : http;
-    const req = mod.request(options, res => {
-      let out = '';
-      res.on('data', chunk => out += chunk);
-      res.on('end', () => resolve(out));
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
-
-// â”€â”€ diff builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-async function getStagedDiff(repoRoot: string): Promise<string> {
-  const maxSize = cfg<number>('maxDiffSize', 8000);
-  const excludes = cfg<string[]>('excludeFiles', ['package-lock.json', 'yarn.lock', 'composer.lock']);
-
-  let diff = '';
-  try {
-    diff = await exec('git diff --cached', repoRoot);
-  } catch {
-    return '';
-  }
-
-  // Strip excluded files
-  const excludePatterns = excludes.map(e => e.replace(/\./g, '\\.').replace(/\*/g, '.*'));
-  if (excludePatterns.length) {
-    const lines = diff.split('\n');
-    let skip = false;
-    diff = lines.filter(line => {
-      if (line.startsWith('diff --git')) {
-        skip = excludePatterns.some(p => new RegExp(p).test(line));
-      }
-      return !skip;
-    }).join('\n');
-  }
-
-  if (diff.length > maxSize) {
-    const stat = await exec('git diff --cached --stat', repoRoot).catch(() => '');
-    diff = `${stat}\n\n[diff truncated â€” ${diff.length} chars]\n${diff.slice(0, maxSize)}`;
-  }
-
-  return diff.trim();
-}
-
-// â”€â”€ prompt builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-async function buildPrompt(diff: string, repoRoot: string): Promise<string> {
-  const style   = cfg<string>('style', 'conventional');
-  const lang    = cfg<string>('language', 'english');
-  const custom  = cfg<string>('customInstructions', '');
-
-  let branch = '';
-  try { branch = (await exec('git rev-parse --abbrev-ref HEAD', repoRoot)).trim(); } catch { /* ignore */ }
-
-  let styleGuide = '';
-  if (style === 'conventional') {
-    styleGuide = `Use Conventional Commits format: type(scope): description
-Types: feat, fix, docs, style, refactor, test, chore, perf
-- Subject line max 72 chars, imperative mood, no period at end
-- Add a body (after blank line) only if the change needs explanation of WHY
-- Never mention file names in the subject line`;
-  } else if (style === 'short') {
-    styleGuide = `Write a single short commit message under 72 chars. Imperative mood. No prefix.`;
-  } else {
-    styleGuide = `Write a detailed commit message:
-- Line 1: short summary (max 72 chars, imperative mood)
-- Blank line
-- Body: what changed and WHY (not how)`;
-  }
-
-  return `You are a Git commit message generator. Write a commit message in ${lang}.
-
-${styleGuide}
-
-${branch ? `Current branch: ${branch}` : ''}
-${custom ? `Extra instructions: ${custom}` : ''}
-
-Staged diff:
-${diff}
-
-Output ONLY the commit message. No explanation, no markdown, no quotes.`;
-}
-
-// â”€â”€ AI providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-async function callOllama(prompt: string): Promise<string> {
-  const url   = cfg<string>('ollamaUrl', 'http://localhost:11434');
-  const model = cfg<string>('ollamaModel', 'qwen2.5-coder:7b');
-  const raw = await httpPost(`${url}/api/generate`, { model, prompt, stream: false }, {});
-  const parsed = JSON.parse(raw);
-  return (parsed.response || '').trim();
-}
-
-async function callGroq(prompt: string): Promise<string> {
-  const key   = cfg<string>('groqApiKey', '');
-  const model = cfg<string>('groqModel', 'llama-3.3-70b-versatile');
-  if (!key) { throw new Error('Groq API key not set. Add it in Settings â†’ PilotCommit.'); }
-  const raw = await httpPost('https://api.groq.com/openai/v1/chat/completions', {
-    model,
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 300,
-    temperature: 0.3,
-  }, { Authorization: `Bearer ${key}` });
-  const parsed = JSON.parse(raw);
-  return (parsed.choices?.[0]?.message?.content || '').trim();
-}
-
-async function callGemini(prompt: string): Promise<string> {
-  const key = cfg<string>('geminiApiKey', '');
-  if (!key) { throw new Error('Gemini API key not set. Add it in Settings â†’ PilotCommit.'); }
-  const raw = await httpPost(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-    { contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 300, temperature: 0.3 } },
-    {}
-  );
-  const parsed = JSON.parse(raw);
-  return (parsed.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-}
-
-async function callOpenRouter(prompt: string): Promise<string> {
-  const key = cfg<string>('openrouterApiKey', '');
-  if (!key) { throw new Error('OpenRouter API key not set. Add it in Settings â†’ PilotCommit.'); }
-  const raw = await httpPost('https://openrouter.ai/api/v1/chat/completions', {
-    model: 'meta-llama/llama-3.1-8b-instruct:free',
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 300,
-  }, { Authorization: `Bearer ${key}` });
-  const parsed = JSON.parse(raw);
-  return (parsed.choices?.[0]?.message?.content || '').trim();
-}
-
-async function generateMessage(prompt: string): Promise<string> {
-  const provider = cfg<string>('provider', 'ollama');
-  switch (provider) {
-    case 'ollama':     return callOllama(prompt);
-    case 'groq':       return callGroq(prompt);
-    case 'gemini':     return callGemini(prompt);
-    case 'openrouter': return callOpenRouter(prompt);
-    default:           return callOllama(prompt);
-  }
-}
-
-// â”€â”€ git repo root â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-async function getRepoRoot(): Promise<string | undefined> {
-  const candidates: string[] = [];
-
-  // Active editor file's directory first
-  const activeFile = vscode.window.activeTextEditor?.document.uri.fsPath;
-  if (activeFile) { candidates.push(path.dirname(activeFile)); }
-
-  // All workspace folders
+async function findRootFromWorkspace(): Promise<string | undefined> {
+  const dirs: string[] = [];
+  const active = vscode.window.activeTextEditor?.document.uri;
+  if (active?.scheme === 'file') { dirs.push(path.dirname(active.fsPath)); }
   for (const f of vscode.workspace.workspaceFolders ?? []) {
-    candidates.push(f.uri.fsPath);
+    if (f.uri.scheme === 'file') { dirs.push(f.uri.fsPath); }
   }
-
-  for (const dir of candidates) {
+  for (const dir of dirs) {
     try {
-      const root = (await exec('git rev-parse --show-toplevel', dir)).trim();
+      const root = (await git(['rev-parse', '--show-toplevel'], dir)).trim();
       if (root) { return root; }
     } catch { /* not a git repo, try next */ }
   }
-
   return undefined;
 }
 
-// â”€â”€ global hook installer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+interface Target { root: string; repo?: GitRepository }
 
-async function installShellIntegration(hooksDir: string): Promise<void> {
-  const msgScript  = path.join(hooksDir, 'aigitpilot-message.sh');
-  const shellFile  = path.join(hooksDir, 'aigitpilot-shell.sh');
-
-  const msgScriptContent = [
-    '#!/bin/sh',
-    'HOOKS_DIR="$HOME/.git-hooks"',
-    'CONFIG="$HOME/.config/aigitpilot/config.json"',
-    'JQ="$HOOKS_DIR/jq.exe"',
-    'command -v jq >/dev/null 2>&1 && JQ=jq',
-    '[ ! -f "$CONFIG" ] && exit 0',
-    'PROVIDER=$($JQ -r \'.provider // "ollama"\' "$CONFIG")',
-    'STYLE=$($JQ -r \'.style // "conventional"\' "$CONFIG")',
-    'LANG=$($JQ -r \'.language // "english"\' "$CONFIG")',
-    'DIFF=$(git diff --cached --stat 2>/dev/null)',
-    '[ -z "$DIFF" ] && exit 0',
-    'if [ "$STYLE" = "conventional" ]; then',
-    '  GUIDE="Conventional Commits: type(scope): description. Max 72 chars."',
-    'else',
-    '  GUIDE="Short commit message under 72 chars."',
-    'fi',
-    'PROMPT="Write a git commit message in $LANG. $GUIDE Output ONLY the message.\\n\\nDiff:\\n$DIFF"',
-    'ESCAPED=$(printf \'%s\' "$PROMPT" | $JQ -Rs .)',
-    'if [ "$PROVIDER" = "ollama" ]; then',
-    '  URL=$($JQ -r \'.ollamaUrl // "http://localhost:11434"\' "$CONFIG")',
-    '  MODEL=$($JQ -r \'.ollamaModel // "qwen2.5-coder:7b"\' "$CONFIG")',
-    '  printf \'%s\' "$(curl -sf "$URL/api/generate" -H "Content-Type: application/json" -d "{\\"model\\":\\"$MODEL\\",\\"prompt\\":$ESCAPED,\\"stream\\":false}" 2>/dev/null | $JQ -r \'.response // empty\')"',
-    'elif [ "$PROVIDER" = "groq" ]; then',
-    '  KEY=$($JQ -r \'.groqApiKey // ""\' "$CONFIG")',
-    '  GMODEL=$($JQ -r \'.groqModel // "llama-3.3-70b-versatile"\' "$CONFIG")',
-    '  [ -z "$KEY" ] && exit 0',
-    '  printf \'%s\' "$(curl -sf "https://api.groq.com/openai/v1/chat/completions" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d "{\\"model\\":\\"$GMODEL\\",\\"messages\\":[{\\"role\\":\\"user\\",\\"content\\":$ESCAPED}],\\"max_tokens\\":300}" 2>/dev/null | $JQ -r \'.choices[0].message.content // empty\')"',
-    'elif [ "$PROVIDER" = "gemini" ]; then',
-    '  KEY=$($JQ -r \'.geminiApiKey // ""\' "$CONFIG")',
-    '  [ -z "$KEY" ] && exit 0',
-    '  printf \'%s\' "$(curl -sf "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$KEY" -H "Content-Type: application/json" -d "{\\"contents\\":[{\\"parts\\":[{\\"text\\":$ESCAPED}]}]}" 2>/dev/null | $JQ -r \'.candidates[0].content.parts[0].text // empty\')"',
-    'fi',
-  ].join('\n');
-
-  // Full shell integration with git wrapper + all shortcuts — embedded as base64 to avoid escaping issues
-  const shellContent = Buffer.from(
-    'IyEvYmluL2Jhc2gKIyBBSSBHaXQgUGlsb3Qgc2hlbGwgaW50ZWdyYXRpb24KCl9haWdpdHBpbG90' +
-    'X2dlbmVyYXRlKCkgewogIF9SQVc9JChzaCAiJEhPTUUvLmdpdC1ob29rcy9haWdpdHBpbG90LW1l' +
-    'c3NhZ2Uuc2giIDI+L2Rldi9udWxsIHwgdHIgLWQgJ1xyJykKICBfUkFXPSIke19SQVcjXCJ9IiA7' +
-    'IF9SQVc9IiR7X1JBVyVcIn0iCiAgX1JBVz0iJHtfUkFXI1wnfSIgOyBfUkFXPSIke19SQVclXCd9' +
-    'IgogIHByaW50ZiAnJXMnICIkX1JBVyIKfQoKX2FpZ2l0cGlsb3RfcHJvbXB0KCkgewogIGxvY2Fs' +
-    'IGJyYW5jaAogIGJyYW5jaD0kKGNvbW1hbmQgZ2l0IHJldi1wYXJzZSAtLWFiYnJldi1yZWYgSEVB' +
-    'RCAyPi9kZXYvbnVsbCkKICBsb2NhbCBzaG9ydF9wd2Q9IiR7UFdELyRIT01FL1x+fSIKICBwcmlu' +
-    'dGYgIlwwMzNbMzJtJXNAJXNcMDMzWzBtIFwwMzNbMzVtTUlOR1c2NFwwMzNbMG0gXDAzM1szM20l' +
-    'c1wwMzNbMG0iICIkVVNFUiIgIiRIT1NUTkFNRSIgIiRzaG9ydF9wd2QiCiAgWyAtbiAiJGJyYW5j' +
-    'aCIgXSAmJiBwcmludGYgIiBcMDMzWzM2bSglcylcMDMzWzBtIiAiJGJyYW5jaCIKICBwcmludGYg' +
-    'Ilxu' + 'Igp9CgpnaXQoKSB7CiAgIyDilIDilIAgZ2l0IGFkZDogc3RhZ2UgdGhlbiBzaG93IGVk' +
-    'aXRhYmxlIGNvbW1hbmQgYXQgcHJvbXB0IOKUgOKUgOKUgOKUgOKUgOKUgOKUgAogIGlmIFsgIiQx' +
-    'IiA9ICJhZGQiIF07IHRoZW4KICAgIGNvbW1hbmQgZ2l0ICIkQCIKICAgIF9TVEFHRUQ9JChjb21t' +
-    'YW5kIGdpdCBkaWZmIC0tY2FjaGVkIC0tbmFtZS1vbmx5IDI+L2Rldi9udWxsKQogICAgaWYgWyAt' +
-    'biAiJF9TVEFHRUQiIF07IHRoZW4KICAgICAgcHJpbnRmICJcMDMzWzM2beKcqCBnZW5lcmF0aW5n' +
-    'Li4uXDAzM1swbVxyIiA+L2Rldi90dHkKICAgICAgX01TRz0kKF9haWdpdHBpbG90X2dlbmVyYXRl' +
-    'KQogICAgICBwcmludGYgIlwwMzNbMksiID4vZGV2L3R0eQogICAgICBpZiBbIC1uICIkX01TRyIg' +
-    'XTsgdGhlbgogICAgICAgIF9DTUQ9ImdpdCBjb21taXQgLW0gXCIkX01TR1wiIgogICAgICAgIF9h' +
-    'aWdpdHBpbG90X3Byb21wdCA+L2Rldi90dHkKICAgICAgICByZWFkIC1lIC1pICIkX0NNRCIgLXAg' +
-    'IiQocHJpbnRmICdcMDMzWzMybSRcMDMzWzBtICcpIiBGSU5BTF9DTUQgPC9kZXYvdHR5ID4vZGV2' +
-    'L3R0eQogICAgICAgIGlmIFsgLW4gIiRGSU5BTF9DTUQiIF07IHRoZW4KICAgICAgICAgIGV2YWwg' +
-    'IiRGSU5BTF9DTUQiCiAgICAgICAgZmkKICAgICAgZmkKICAgIGZpCiAgICByZXR1cm4KICBmaQoK' +
-    'ICAjIOKUgOKUgCBnaXQgY29tbWl0IChubyAtbSk6IGdlbmVyYXRlICsgZWRpdGFibGUg4pSA4pSA' +
-    '4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSACiAgaWYg' +
-    'WyAiJDEiID0gImNvbW1pdCIgXTsgdGhlbgogICAgX0hBU19NPTAKICAgIGZvciBfYSBpbiAiJEAi' +
-    'OyBkbwogICAgICBjYXNlICIkX2EiIGluIC1tfC0tbWVzc2FnZXwtbSopIF9IQVNfTT0xOyBicmVh' +
-    'ayA7OyBlc2FjCiAgICBkb25lCiAgICBpZiBbICIkX0hBU19NIiAtZXEgMCBdOyB0aGVuCiAgICAg' +
-    'IHByaW50ZiAiXDAzM1szNm3inKggZ2VuZXJhdGluZy4uLlwwMzNbMG1cciIgPi9kZXYvdHR5CiAg' +
-    'ICAgIF9NU0c9JChfYWlnaXRwaWxvdF9nZW5lcmF0ZSkKICAgICAgcHJpbnRmICJcMDMzWzJLIiA+' +
-    'L2Rldi90dHkKICAgICAgaWYgWyAtbiAiJF9NU0ciIF07IHRoZW4KICAgICAgICBfQ01EPSJnaXQg' +
-    'Y29tbWl0IC1tIFwiJF9NU0dcIiIKICAgICAgICBfYWlnaXRwaWxvdF9wcm9tcHQgPi9kZXYvdHR5' +
-    'CiAgICAgICAgcmVhZCAtZSAtaSAiJF9DTUQiIC1wICIkKHByaW50ZiAnXDAzM1szMm0kXDAzM1sw' +
-    'bSAnKSIgRklOQUxfQ01EIDwvZGV2L3R0eSA+L2Rldi90dHkKICAgICAgICBpZiBbIC1uICIkRklO' +
-    'QUxfQ01EIiBdOyB0aGVuCiAgICAgICAgICBldmFsICIkRklOQUxfQ01EIgogICAgICAgIGZpCiAg' +
-    'ICAgICAgcmV0dXJuCiAgICAgIGZpCiAgICBmaQogIGZpCgogIGNvbW1hbmQgZ2l0ICIkQCIKfQoK' +
-    'IyDilIDilIAgc2hvcnRjdXRzIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKU' +
-    'gOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKU' +
-    'gOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgAphZGQoKSB7' +
-    'CiAgZ2l0IGFkZCAuCn0KCnB1c2goKSB7CiAgbG9jYWwgYnJhbmNoCiAgYnJhbmNoPSQoY29tbWFu' +
-    'ZCBnaXQgcmV2LXBhcnNlIC0tYWJicmV2LXJlZiBIRUFEIDI+L2Rldi9udWxsKQogIGNvbW1hbmQg' +
-    'Z2l0IHB1c2ggb3JpZ2luICIkYnJhbmNoIiAiJEAiCn0KCnB1bGwoKSB7CiAgbG9jYWwgYnJhbmNo' +
-    'CiAgYnJhbmNoPSQoY29tbWFuZCBnaXQgcmV2LXBhcnNlIC0tYWJicmV2LXJlZiBIRUFEIDI+L2Rl' +
-    'di9udWxsKQogIGNvbW1hbmQgZ2l0IHB1bGwgb3JpZ2luICIkYnJhbmNoIiAiJEAiCn0KCnN0YXR1' +
-    'cygpIHsKICBjb21tYW5kIGdpdCBzdGF0dXMgLS1zaG9ydAp9CgphYm9ydCgpIHsKICBjb21tYW5k' +
-    'IGdpdCBtZXJnZSAtLWFib3J0ICIkQCIKfQoKcygpICAgICAgeyBjb21tYW5kIGdpdCBzdGF0dXMg' +
-    'LS1zaG9ydDsgfQpsb2coKSAgICB7IGNvbW1hbmQgZ2l0IGxvZyAtLW9uZWxpbmUgLS1ncmFwaCAt' +
-    'LWRlY29yYXRlIC0xNSAiJEAiOyB9CmNvKCkgICAgIHsgY29tbWFuZCBnaXQgY2hlY2tvdXQgIiRA' +
-    'IjsgfQpjYigpICAgICB7IGNvbW1hbmQgZ2l0IGNoZWNrb3V0IC1iICIkQCI7IH0KYnIoKSAgICAg' +
-    'eyBjb21tYW5kIGdpdCBicmFuY2ggIiRAIjsgfQpmZXRjaCgpICB7IGNvbW1hbmQgZ2l0IGZldGNo' +
-    'ICIkQCI7IH0Kc3Rhc2goKSAgeyBjb21tYW5kIGdpdCBzdGFzaCAiJEAiOyB9CnBvcCgpICAgIHsg' +
-    'Y29tbWFuZCBnaXQgc3Rhc2ggcG9wICIkQCI7IH0KZGlmZigpICAgeyBjb21tYW5kIGdpdCBkaWZm' +
-    'ICIkQCI7IH0Kc3RhZ2VkKCkgeyBjb21tYW5kIGdpdCBkaWZmIC0tY2FjaGVkICIkQCI7IH0KdW5k' +
-    'bygpICAgeyBjb21tYW5kIGdpdCByZXNldCAtLXNvZnQgSEVBRH4xOyB9CmFtZW5kKCkgIHsgY29t' +
-    'bWFuZCBnaXQgY29tbWl0IC0tYW1lbmQgLS1uby1lZGl0OyB9Cm1lcmdlKCkgIHsgY29tbWFuZCBn' +
-    'aXQgbWVyZ2UgIiRAIjsgfQpyZWJhc2UoKSB7IGNvbW1hbmQgZ2l0IHJlYmFzZSAiJEAiOyB9CnRh' +
-    'ZygpICAgIHsgY29tbWFuZCBnaXQgdGFnICIkQCI7IH0KY2xvbmUoKSAgeyBjb21tYW5kIGdpdCBj' +
-    'bG9uZSAiJEAiOyB9CgptYXMoKSB7IGNvbW1hbmQgZ2l0IHB1bGwgb3JpZ2luIG1hc3RlciAiJEAi' +
-    'OyB9Cm1uKCkgIHsgY29tbWFuZCBnaXQgcHVsbCBvcmlnaW4gbWFpbiAiJEAiOyB9CmQoKSAgIHsg' +
-    'Y29tbWFuZCBnaXQgcHVsbCBvcmlnaW4gZGV2ZWxvcCAiJEAiOyB9Cg==',
-    'base64'
-  ).toString('utf8');
-
-  fs.writeFileSync(msgScript, msgScriptContent, { mode: 0o755 });
-  fs.writeFileSync(shellFile, shellContent, { mode: 0o755 });
-
-  // Source in .bashrc and .zshrc
-  const sourceLine = '\n# AI Git Pilot\n[ -f "$HOME/.git-hooks/aigitpilot-shell.sh" ] && . "$HOME/.git-hooks/aigitpilot-shell.sh"\n';
-  for (const rc of [path.join(os.homedir(), '.bashrc'), path.join(os.homedir(), '.zshrc')]) {
-    try {
-      const existing = fs.existsSync(rc) ? fs.readFileSync(rc, 'utf8') : '';
-      if (!existing.includes('aigitpilot-shell.sh')) {
-        fs.appendFileSync(rc, sourceLine, 'utf8');
-      }
-    } catch { /* rc may not exist on this OS */ }
+/** The repository whose ✨ was clicked, else the active editor's, else the selected one, else ask. */
+async function resolveTarget(arg?: unknown): Promise<Target | undefined> {
+  const api = await gitApi();
+  const clicked = (arg as { rootUri?: vscode.Uri } | undefined)?.rootUri;
+  if (clicked && typeof clicked.fsPath === 'string') {
+    const repo = api?.getRepository(clicked) ?? undefined;
+    return { root: repo?.rootUri.fsPath ?? clicked.fsPath, repo };
   }
-}
-async function installGlobalHook(): Promise<void> {
-  const hooksDir  = path.join(os.homedir(), '.git-hooks');
-  const hookFile  = path.join(hooksDir, 'prepare-commit-msg');
-  const batFile   = path.join(hooksDir, 'prepare-commit-msg.bat');
-  const configDir = path.join(os.homedir(), '.config', 'aigitpilot');
-  const configFile = path.join(configDir, 'config.json');
-
-  fs.mkdirSync(hooksDir, { recursive: true });
-  fs.mkdirSync(configDir, { recursive: true });
-
-  // Write current config for the hook to read
-  const config = {
-    provider: cfg<string>('provider', 'ollama'),
-    ollamaUrl: cfg<string>('ollamaUrl', 'http://localhost:11434'),
-    ollamaModel: cfg<string>('ollamaModel', 'qwen2.5-coder:7b'),
-    groqApiKey: cfg<string>('groqApiKey', ''),
-    groqModel: cfg<string>('groqModel', 'llama-3.3-70b-versatile'),
-    geminiApiKey: cfg<string>('geminiApiKey', ''),
-    style: cfg<string>('style', 'conventional'),
-    language: cfg<string>('language', 'english'),
-    customInstructions: cfg<string>('customInstructions', ''),
-  };
-  fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf8');
-
-  const hookScript = `#!/bin/sh
-# AI Git Pilot â€” auto-generated hook
-COMMIT_MSG_FILE="$1"
-COMMIT_SOURCE="$2"
-
-# Skip if message already provided
-[ "$COMMIT_SOURCE" = "message" ] && exit 0
-[ "$COMMIT_SOURCE" = "merge" ] && exit 0
-[ "$COMMIT_SOURCE" = "squash" ] && exit 0
-
-CONFIG="$HOME/.config/aigitpilot/config.json"
-[ ! -f "$CONFIG" ] && exit 0
-
-HOOKS_DIR=$(dirname "$0")
-JQ="jq"
-command -v jq >/dev/null 2>&1 || {
-  [ -f "$HOOKS_DIR/jq.exe" ] && JQ="$HOOKS_DIR/jq.exe" || exit 0
-}
-command -v curl >/dev/null 2>&1 || exit 0
-
-PROVIDER=$($JQ -r '.provider // "ollama"' "$CONFIG")
-STYLE=$($JQ -r '.style // "conventional"' "$CONFIG")
-LANG=$($JQ -r '.language // "english"' "$CONFIG")
-CUSTOM=$($JQ -r '.customInstructions // ""' "$CONFIG")
-
-DIFF=$(git diff --cached --stat 2>/dev/null)
-[ -z "$DIFF" ] && exit 0
-
-if [ "$STYLE" = "conventional" ]; then
-  STYLE_GUIDE="Use Conventional Commits: type(scope): description. Types: feat,fix,docs,refactor,chore,test,perf. Max 72 chars."
-else
-  STYLE_GUIDE="Write a short clear commit message under 72 chars."
-fi
-
-EXTRA=""
-[ -n "$CUSTOM" ] && EXTRA="Extra: $CUSTOM"
-PROMPT="Write a git commit message in $LANG. $STYLE_GUIDE $EXTRA Output ONLY the message.\\n\\nDiff summary:\\n$DIFF"
-
-MESSAGE=""
-
-if [ "$PROVIDER" = "ollama" ]; then
-  OLLAMA_URL=$($JQ -r '.ollamaUrl // "http://localhost:11434"' "$CONFIG")
-  MODEL=$($JQ -r '.ollamaModel // "qwen2.5-coder:7b"' "$CONFIG")
-  ESCAPED=$(printf '%s' "$PROMPT" | $JQ -Rs .)
-  RESPONSE=$(curl -sf "$OLLAMA_URL/api/generate" \\
-    -H "Content-Type: application/json" \\
-    -d "{\\"model\\":\\"$MODEL\\",\\"prompt\\":$ESCAPED,\\"stream\\":false}" 2>/dev/null)
-  MESSAGE=$(echo "$RESPONSE" | $JQ -r '.response // empty' 2>/dev/null)
-
-elif [ "$PROVIDER" = "groq" ]; then
-  KEY=$($JQ -r '.groqApiKey // ""' "$CONFIG")
-  GMODEL=$($JQ -r '.groqModel // "llama-3.3-70b-versatile"' "$CONFIG")
-  [ -z "$KEY" ] && exit 0
-  ESCAPED=$(printf '%s' "$PROMPT" | $JQ -Rs .)
-  RESPONSE=$(curl -sf "https://api.groq.com/openai/v1/chat/completions" \\
-    -H "Authorization: Bearer $KEY" \\
-    -H "Content-Type: application/json" \\
-    -d "{\\"model\\":\\"$GMODEL\\",\\"messages\\":[{\\"role\\":\\"user\\",\\"content\\":$ESCAPED}],\\"max_tokens\\":300}" 2>/dev/null)
-  MESSAGE=$(echo "$RESPONSE" | $JQ -r '.choices[0].message.content // empty' 2>/dev/null)
-
-elif [ "$PROVIDER" = "gemini" ]; then
-  KEY=$($JQ -r '.geminiApiKey // ""' "$CONFIG")
-  [ -z "$KEY" ] && exit 0
-  ESCAPED=$(printf '%s' "$PROMPT" | $JQ -Rs .)
-  RESPONSE=$(curl -sf "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$KEY" \\
-    -H "Content-Type: application/json" \\
-    -d "{\\"contents\\":[{\\"parts\\":[{\\"text\\":$ESCAPED}]}]}" 2>/dev/null)
-  MESSAGE=$(echo "$RESPONSE" | $JQ -r '.candidates[0].content.parts[0].text // empty' 2>/dev/null)
-fi
-
-if [ -n "$MESSAGE" ]; then
-  printf '%s' "$MESSAGE" > "$COMMIT_MSG_FILE"
-  printf "\n\\\\033[1;36m\xE2\x9C\xA8 AI Git Pilot:\\\\033[0m \\\\033[0;33m%s\\\\033[0m\n\n" "$MESSAGE"
-fi
-exit 0
-`;
-
-  fs.writeFileSync(hookFile, hookScript, { mode: 0o755 });
-
-  // Windows .bat wrapper
-  const gitShPath = 'C:\\Program Files\\Git\\bin\\sh.exe';
-  const batScript = `@echo off\r\n"${gitShPath}" "%~dp0prepare-commit-msg" %*\r\n`;
-  fs.writeFileSync(batFile, batScript, 'utf8');
-
-  // Install shell integration
-  await installShellIntegration(hooksDir);
-
-  // Set global hooks path
-  try {
-    await exec(`git config --global core.hooksPath "${hooksDir}"`);
-    vscode.window.showInformationMessage(`AI Git Pilot: Global hook installed at ${hooksDir}. Works in all git clients.`);
-  } catch (e) {
-    vscode.window.showErrorMessage(`AI Git Pilot: Hook files written but git config failed: ${e}`);
+  const repos = api?.repositories ?? [];
+  if (repos.length === 1) { return { root: repos[0].rootUri.fsPath, repo: repos[0] }; }
+  if (api && repos.length > 1) {
+    const active = vscode.window.activeTextEditor?.document.uri;
+    const selected = repos.filter(r => r.ui?.selected);
+    const repo = (active && api.getRepository(active))
+      ?? (selected.length === 1 ? selected[0] : undefined)
+      ?? (await vscode.window.showQuickPick(
+        repos.map(r => ({ label: path.basename(r.rootUri.fsPath), description: r.rootUri.fsPath, repo: r })),
+        { title: 'AI Git Pilot: Which repository?' }))?.repo;
+    return repo && { root: repo.rootUri.fsPath, repo };
   }
+  const root = await findRootFromWorkspace();
+  return root ? { root } : undefined;
 }
 
-// â”€â”€ setup wizard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── main command ──────────────────────────────────────────────────────────────
 
-async function runSetup(): Promise<void> {
-  const provider = await vscode.window.showQuickPick([
-    { label: '$(vm) Ollama (Recommended)', description: 'Free, private, unlimited â€” runs locally', value: 'ollama' },
-    { label: '$(cloud) Groq', description: 'Free cloud API â€” fastest inference, 1000 req/day', value: 'groq' },
-    { label: '$(globe) Google Gemini', description: 'Free cloud API â€” 1500 req/day', value: 'gemini' },
-    { label: '$(link) OpenRouter', description: 'Free models via OpenRouter', value: 'openrouter' },
-  ], { title: 'AI Git Pilot: Choose AI Provider', placeHolder: 'Select provider' });
-
-  if (!provider) { return; }
-
-  const config = vscode.workspace.getConfiguration('aigitpilot');
-  await config.update('provider', provider.value, vscode.ConfigurationTarget.Global);
-
-  if (provider.value === 'ollama') {
-    const model = await vscode.window.showQuickPick([
-      { label: 'qwen2.5-coder:7b', description: 'Recommended â€” code-optimized, fast, 8GB RAM' },
-      { label: 'llama3.2:3b',      description: 'Smallest â€” works on 4GB RAM, decent quality' },
-      { label: 'llama3.1:8b',      description: 'General purpose, good quality' },
-      { label: 'codellama:7b',     description: 'Meta code model' },
-    ], { title: 'AI Git Pilot: Choose Ollama Model' });
-    if (model) { await config.update('ollamaModel', model.label, vscode.ConfigurationTarget.Global); }
-    vscode.window.showInformationMessage(
-      'Run: ollama pull ' + (model?.label || 'qwen2.5-coder:7b'),
-      'Open Ollama Docs'
-    ).then(action => {
-      if (action) { vscode.env.openExternal(vscode.Uri.parse('https://ollama.com')); }
-    });
-  } else if (provider.value === 'groq') {
-    const key = await vscode.window.showInputBox({ prompt: 'Paste your Groq API key (free at console.groq.com)', password: true });
-    if (key) { await config.update('groqApiKey', key, vscode.ConfigurationTarget.Global); }
-  } else if (provider.value === 'gemini') {
-    const key = await vscode.window.showInputBox({ prompt: 'Paste your Gemini API key (free at aistudio.google.com)', password: true });
-    if (key) { await config.update('geminiApiKey', key, vscode.ConfigurationTarget.Global); }
-  } else if (provider.value === 'openrouter') {
-    const key = await vscode.window.showInputBox({ prompt: 'Paste your OpenRouter API key (free at openrouter.ai)', password: true });
-    if (key) { await config.update('openrouterApiKey', key, vscode.ConfigurationTarget.Global); }
-  }
-
-  const style = await vscode.window.showQuickPick([
-    { label: 'conventional', description: 'feat(scope): description â€” Conventional Commits standard' },
-    { label: 'short',        description: 'Single short line, no prefix' },
-    { label: 'detailed',     description: 'Summary + body explaining WHY' },
-  ], { title: 'AI Git Pilot: Commit Message Style' });
-  if (style) { await config.update('style', style.label, vscode.ConfigurationTarget.Global); }
-
-  vscode.window.showInformationMessage('AI Git Pilot setup complete! Click âœ¨ in Source Control to generate.', 'Install Global Hook').then(action => {
-    if (action) { installGlobalHook(); }
-  });
-}
-
-// â”€â”€ main command â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-async function generateCommitMessage(): Promise<void> {
-  const repoRoot = await getRepoRoot();
-  if (!repoRoot) {
-    vscode.window.showErrorMessage('AI Git Pilot: No git repository found in workspace.');
+async function generateCommitMessage(arg?: unknown): Promise<void> {
+  const target = await resolveTarget(arg);
+  if (!target) {
+    vscode.window.showErrorMessage('AI Git Pilot: No git repository found in this workspace.');
     return;
   }
-
-  // Check staged files
-  let stagedStat = '';
-  try { stagedStat = await exec('git diff --cached --name-only', repoRoot); } catch { /* ignore */ }
-  if (!stagedStat.trim()) {
-    vscode.window.showWarningMessage('AI Git Pilot: No staged changes. Run git add first.');
-    return;
-  }
+  const settings = await providerSettings();
+  const label = PROVIDER_LABEL[settings.provider];
 
   await vscode.window.withProgress({
-    location: vscode.ProgressLocation.SourceControl,
-    title: 'AI Git Pilot: Generating commit messageâ€¦',
-    cancellable: false,
-  }, async () => {
+    location: vscode.ProgressLocation.Notification,
+    title: `AI Git Pilot: Writing a commit message with ${label}…`,
+    cancellable: true,
+  }, async (_progress, token) => {
+    const abort = new AbortController();
+    token.onCancellationRequested(() => abort.abort());
     try {
-      const diff    = await getStagedDiff(repoRoot);
-      if (!diff) {
-        vscode.window.showWarningMessage('AI Git Pilot: Could not read staged diff.');
+      const changes = await collectChanges(target.root, cfg<string[]>('excludeFiles', DEFAULT_EXCLUDES), cfg<number>('maxDiffSize', 8000));
+      if (!changes) {
+        vscode.window.showInformationMessage('AI Git Pilot: No changes to describe.');
         return;
       }
-      const prompt  = await buildPrompt(diff, repoRoot);
-      const message = await generateMessage(prompt);
-
-      if (!message) {
-        vscode.window.showErrorMessage('AI Git Pilot: AI returned an empty response. Check your provider settings.');
-        return;
+      const typed = target.repo?.inputBox.value.trim() ?? '';
+      const draft = typed && typed !== lastGenerated.get(target.root) ? typed : undefined;
+      const context = await repoContext(target.root, cfg<boolean>('matchRepoStyle', true));
+      const prompts = promptSettings();
+      const chat = { system: systemPrompt(prompts), user: userPrompt({ ...context, ...changes, draft }) };
+      let raw: string;
+      try {
+        raw = await complete(settings, chat, abort.signal);
+      } catch (err) {
+        const replacement = await replacementModel(err, settings, abort.signal);
+        if (!replacement) { throw err; }
+        raw = await complete({ ...settings, model: replacement }, chat, abort.signal);
+        await vscode.workspace.getConfiguration('aigitpilot')
+          .update(MODEL_SETTING[settings.provider], replacement, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(
+          `AI Git Pilot: ${label} no longer offers "${settings.model}", so AI Git Pilot switched to "${replacement}".`, 'Choose Model')
+          .then(action => { if (action) { void runSetup(settings.provider); } });
       }
+      const message = cleanMessage(raw, prompts.style);
+      if (!message) { throw new ProviderError(`${label} sent back an empty message.`, 'other'); }
 
-      // Inject into Source Control input box
-      const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports;
-      const api = gitExtension?.getAPI(1);
-      if (api?.repositories?.length) {
-        api.repositories[0].inputBox.value = message;
+      lastGenerated.set(target.root, message);
+      if (target.repo) {
+        target.repo.inputBox.value = message;
+        if (changes.source === 'all') {
+          vscode.window.setStatusBarMessage('$(sparkle) AI Git Pilot: nothing was staged, so the message covers all changes.', 6000);
+        }
       } else {
-        // Fallback: copy to clipboard
         await vscode.env.clipboard.writeText(message);
-        vscode.window.showInformationMessage('AI Git Pilot: Copied to clipboard â€” paste into commit message box.');
+        vscode.window.showInformationMessage('AI Git Pilot: Copied the message to the clipboard. Paste it into the commit box.');
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND')) {
-        const action = await vscode.window.showErrorMessage(
-          `AI Git Pilot: Cannot reach ${cfg<string>('provider', 'ollama')}. Is it running?`,
-          'Setup Provider'
-        );
-        if (action) { runSetup(); }
-      } else {
-        vscode.window.showErrorMessage(`AI Git Pilot: ${msg}`);
-      }
+    } catch (err) {
+      if (!isCancel(err)) { void showProblem(err, settings); }
     }
   });
 }
 
-// â”€â”€ activate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/**
+ * Cloud providers retire models often. When the saved one is gone, returns a model the
+ * provider still offers (a recommended one first), or undefined to report the error.
+ */
+async function replacementModel(err: unknown, s: ProviderSettings, signal: AbortSignal): Promise<string | undefined> {
+  if (!(err instanceof ProviderError) || err.kind !== 'model' || s.provider === 'ollama') { return undefined; }
+  const available = await listModels(s, signal).catch(() => [] as string[]);
+  const recommended = RECOMMENDED[s.provider].map(r => r.id).find(id => id !== s.model && available.includes(id));
+  return recommended ?? available.find(id => id !== s.model);
+}
 
+function pullOllamaModel(model: string): void {
+  if (!/^[\w.:/-]+$/.test(model)) {
+    vscode.window.showErrorMessage(`AI Git Pilot: "${model}" does not look like an Ollama model name.`);
+    return;
+  }
+  const terminal = vscode.window.createTerminal('Ollama');
+  terminal.show();
+  terminal.sendText(`ollama pull ${model}`);
+}
 
-// -- auto requirements --------------------------------------------------------
+async function showProblem(err: unknown, s: ProviderSettings): Promise<void> {
+  if (!(err instanceof ProviderError)) {
+    vscode.window.showErrorMessage(`AI Git Pilot: ${errText(err)}`);
+    return;
+  }
+  const label = PROVIDER_LABEL[s.provider];
+  let text = err.message;
+  const actions: string[] = [];
+  switch (err.kind) {
+    case 'unreachable':
+      if (s.provider === 'ollama') { text = `Cannot reach Ollama at ${s.ollamaUrl}. Start the Ollama app or run "ollama serve".`; }
+      actions.push('Setup Provider');
+      break;
+    case 'model':
+      if (s.provider === 'ollama') {
+        text = `Ollama does not have the model "${s.model}" yet.`;
+        actions.push('Pull Model');
+      }
+      actions.push('Choose Model');
+      break;
+    case 'auth':
+      actions.push('Set API Key');
+      break;
+    case 'rateLimit':
+      text = `${err.message} Try again later, or switch provider.`;
+      actions.push('Switch Provider');
+      break;
+    case 'timeout':
+      text = `${label} did not answer within 2 minutes.`
+        + (s.provider === 'ollama' ? ' The first run loads the model and can be slow; try again.' : '');
+      break;
+  }
+  const action = await vscode.window.showErrorMessage(`AI Git Pilot: ${text}`, ...actions);
+  if (action === 'Pull Model') { pullOllamaModel(s.model); }
+  else if (action === 'Choose Model' || action === 'Set API Key') { void runSetup(s.provider); }
+  else if (action) { void runSetup(); }
+}
 
-function downloadFile(url: string, dest: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(dest);
-    const doGet = (u: string) => {
-      https.get(u, res => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
-          doGet(res.headers.location as string);
-          return;
-        }
-        if (res.statusCode !== 200) { reject(new Error(`HTTP ${res.statusCode}`)); return; }
-        res.pipe(file);
-        file.on('finish', () => { file.close(); resolve(); });
-        file.on('error', reject);
-      }).on('error', reject);
+// ── setup wizard ──────────────────────────────────────────────────────────────
+
+const PROVIDER_ITEMS: { label: string; description: string; value: ProviderId }[] = [
+  { label: '$(vm) Ollama', description: 'Free, private, unlimited. Runs on your machine', value: 'ollama' },
+  { label: '$(zap) Groq', description: 'Free cloud API with daily limits. Very fast', value: 'groq' },
+  { label: '$(globe) Google Gemini', description: 'Free cloud API with daily limits', value: 'gemini' },
+  { label: '$(link) OpenRouter', description: 'Free models from many labs', value: 'openrouter' },
+];
+
+const KEY_URL: Record<KeyedProvider, string> = {
+  groq: 'https://console.groq.com/keys',
+  gemini: 'https://aistudio.google.com/apikey',
+  openrouter: 'https://openrouter.ai/keys',
+};
+
+const RECOMMENDED: Record<ProviderId, { id: string; note: string }[]> = {
+  ollama: [
+    { id: 'qwen2.5-coder:7b', note: 'Recommended: code-tuned, about 8 GB RAM' },
+    { id: 'llama3.2:3b', note: 'Smallest: works with 4 GB RAM' },
+    { id: 'llama3.1:8b', note: 'General purpose' },
+    { id: 'codellama:7b', note: 'Meta code model' },
+  ],
+  groq: [
+    { id: 'openai/gpt-oss-20b', note: 'Recommended: fast, clean output' },
+    { id: 'openai/gpt-oss-120b', note: 'Larger, a little slower' },
+    { id: 'qwen/qwen3.8-27b', note: 'Fastest' },
+  ],
+  gemini: [{ id: 'gemini-flash-latest', note: 'Recommended: always the newest Flash model' }],
+  openrouter: [{ id: 'openrouter/free', note: 'Recommended: routes to a free model that is up' }],
+};
+
+/** Asks for a key unless the user keeps the saved one. Returns false when cancelled. */
+async function askApiKey(p: KeyedProvider): Promise<boolean> {
+  const label = PROVIDER_LABEL[p];
+  const existing = await getApiKey(p);
+  const host = new URL(KEY_URL[p]).host;
+  const choice = await vscode.window.showQuickPick([
+    ...(existing ? [{ label: '$(check) Keep the saved key', description: `ends in …${existing.slice(-4)}`, action: 'keep' }] : []),
+    { label: '$(key) Paste a key', description: '', action: 'paste' },
+    { label: `$(link-external) Get a free key at ${host}`, description: 'opens the browser, then asks for the key', action: 'open' },
+  ], { title: `AI Git Pilot: ${label} API Key`, ignoreFocusOut: true });
+  if (!choice) { return false; }
+  if (choice.action === 'keep') { return true; }
+  if (choice.action === 'open') { await vscode.env.openExternal(vscode.Uri.parse(KEY_URL[p])); }
+  const key = await vscode.window.showInputBox({
+    title: `AI Git Pilot: ${label} API Key`,
+    prompt: `Paste your ${label} API key. It is kept in VS Code's secret storage.`,
+    password: true,
+    ignoreFocusOut: true,
+    validateInput: v => v.trim() ? undefined : 'Paste a key, or press Escape to cancel.',
+  });
+  if (!key) { return false; }
+  await storeApiKey(p, key.trim());
+  return true;
+}
+
+interface ModelItem extends vscode.QuickPickItem { model?: string; custom?: boolean }
+
+async function pickModel(p: ProviderId): Promise<{ model: string; installed: boolean } | undefined> {
+  const s = await providerSettings(p);
+  const label = PROVIDER_LABEL[p];
+  let available: string[] | undefined;
+
+  const items = (async (): Promise<ModelItem[]> => {
+    let failure = '';
+    try { available = await listModels(s); } catch (err) { failure = errText(err); }
+    const out: ModelItem[] = [];
+    const seen = new Set<string>();
+    const add = (id: string, note: string) => {
+      if (seen.has(id)) { return; }
+      seen.add(id);
+      out.push({ label: id === s.model ? `$(check) ${id}` : id, description: note, model: id });
     };
-    doGet(url);
+    const separator = (text: string) => out.push({ label: text, kind: vscode.QuickPickItemKind.Separator });
+    const noteFor = (id: string) => RECOMMENDED[p].find(r => r.id === id)?.note ?? '';
+
+    if (failure) { separator(`Could not load the ${label} model list: ${failure}`); }
+    if (p === 'ollama' && available) {
+      if (available.length) { separator('Installed'); }
+      available.forEach(id => add(id, noteFor(id)));
+      const missing = RECOMMENDED.ollama.filter(r => !available!.includes(r.id));
+      if (missing.length) { separator('Not pulled yet'); }
+      missing.forEach(r => add(r.id, `${r.note} (needs ollama pull)`));
+    } else {
+      RECOMMENDED[p].forEach(r => add(r.id, r.note));
+      if (available?.length) { separator('All models'); }
+      available?.forEach(id => add(id, ''));
+    }
+    if (!seen.has(s.model)) { out.unshift({ label: `$(check) ${s.model}`, description: 'current', model: s.model }); }
+    separator('');
+    out.push({ label: '$(edit) Enter a model id…', custom: true });
+    return out;
+  })();
+
+  const choice = await vscode.window.showQuickPick(items, {
+    title: `AI Git Pilot: ${label} Model`,
+    placeHolder: `Current: ${s.model}`,
+    matchOnDescription: true,
+    ignoreFocusOut: true,
+  });
+  if (!choice) { return undefined; }
+  let model = choice.model;
+  if (choice.custom) {
+    model = (await vscode.window.showInputBox({
+      title: `AI Git Pilot: ${label} Model`,
+      prompt: 'Model id, exactly as the provider names it',
+      value: s.model,
+      ignoreFocusOut: true,
+    }))?.trim();
+  }
+  if (!model) { return undefined; }
+  return { model, installed: p !== 'ollama' || !available || available.includes(model) };
+}
+
+async function pickStyle(): Promise<string | undefined> {
+  const current = cfg<string>('style', 'conventional');
+  const choice = await vscode.window.showQuickPick([
+    { label: 'conventional', description: 'feat(scope): description. The Conventional Commits standard' },
+    { label: 'short', description: 'One short line, no prefix' },
+    { label: 'detailed', description: 'Summary line plus a body explaining why' },
+  ].map(i => ({ ...i, description: i.label === current ? `${i.description} (current)` : i.description })),
+  { title: 'AI Git Pilot: Commit Message Style', ignoreFocusOut: true });
+  return choice?.label;
+}
+
+/** Full wizard, or from `startAt` (error buttons): key and model only. */
+async function runSetup(startAt?: ProviderId): Promise<void> {
+  const conf = vscode.workspace.getConfiguration('aigitpilot');
+  let provider = startAt;
+  if (!provider) {
+    const current = currentProvider();
+    const choice = await vscode.window.showQuickPick(
+      PROVIDER_ITEMS.map(i => ({ ...i, description: i.value === current ? `${i.description} (current)` : i.description })),
+      { title: 'AI Git Pilot: Choose AI Provider', placeHolder: 'Select provider', ignoreFocusOut: true });
+    if (!choice) { return; }
+    provider = choice.value;
+  }
+  if (provider !== 'ollama' && !(await askApiKey(provider))) { return; }
+  const picked = await pickModel(provider);
+  if (!picked) { return; }
+  const style = startAt ? undefined : await pickStyle();
+  if (!startAt && !style) { return; }
+
+  await conf.update('provider', provider, vscode.ConfigurationTarget.Global);
+  await conf.update(MODEL_SETTING[provider], picked.model, vscode.ConfigurationTarget.Global);
+  if (style) { await conf.update('style', style, vscode.ConfigurationTarget.Global); }
+  await ctx.globalState.update('setupDone', true);
+
+  if (!picked.installed) {
+    const action = await vscode.window.showInformationMessage(
+      `AI Git Pilot: Saved. Ollama still needs to download "${picked.model}".`, 'Pull Model');
+    if (action) { pullOllamaModel(picked.model); }
+    return;
+  }
+  await testProvider();
+}
+
+/** Sends a tiny request so a bad key or model shows up now, not at the first commit. */
+async function testProvider(): Promise<void> {
+  const s = await providerSettings();
+  const label = PROVIDER_LABEL[s.provider];
+  const started = Date.now();
+  try {
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `AI Git Pilot: Checking ${label} (${s.model})…`,
+      cancellable: true,
+    }, (_progress, token) => {
+      const abort = new AbortController();
+      token.onCancellationRequested(() => abort.abort());
+      return complete(s, { system: 'Reply with the single word OK.', user: 'ping' }, abort.signal);
+    });
+  } catch (err) {
+    if (!isCancel(err)) { void showProblem(err, s); }
+    return;
+  }
+  const seconds = ((Date.now() - started) / 1000).toFixed(1);
+  const actions = cfg<boolean>('globalHook', true) && hook.isInstalled() ? [] : ['Install Global Hook'];
+  const action = await vscode.window.showInformationMessage(
+    `AI Git Pilot: ${label} (${s.model}) answered in ${seconds} s. Click ✨ in Source Control to write a commit message.`, ...actions);
+  if (action) { void installHook(true); }
+}
+
+// ── global hook ───────────────────────────────────────────────────────────────
+
+/** Writes the settings the hook scripts read, API keys included. */
+async function syncHookConfig(): Promise<void> {
+  const keyed = Object.keys(KEY_SETTING) as KeyedProvider[];
+  const keys = await Promise.all(keyed.map(async p => [KEY_SETTING[p], await getApiKey(p)] as const));
+  const prompts = promptSettings();
+  hook.writeHookConfig({
+    provider: currentProvider(),
+    ollamaUrl: cfg<string>('ollamaUrl', 'http://localhost:11434'),
+    ...Object.fromEntries(PROVIDERS.map(p => [MODEL_SETTING[p], cfg<string>(MODEL_SETTING[p], DEFAULT_MODEL[p])])),
+    ...Object.fromEntries(keys),
+    ...prompts,
+    maxDiffSize: cfg<number>('maxDiffSize', 8000),
+    excludeFiles: cfg<string[]>('excludeFiles', DEFAULT_EXCLUDES),
+    matchRepoStyle: cfg<boolean>('matchRepoStyle', true),
+    systemPrompt: systemPrompt(prompts),
+  }, {
+    suggestOnAdd: cfg<boolean>('terminalSuggestOnAdd', true),
+    shortcuts: cfg<boolean>('shellShortcuts', true),
   });
 }
 
-async function ensureRequirements(hooksDir: string): Promise<void> {
-  const jqInHooks = path.join(hooksDir, 'jq.exe');
-  const jqInPath  = await exec('jq --version').then(() => true).catch(() => false);
-  const jqBundled = fs.existsSync(jqInHooks);
-
-  if (jqInPath || jqBundled) { return; }
-
+async function ensureJq(manual: boolean): Promise<boolean> {
+  if (await hook.hasJq()) { return true; }
+  const warnOnce = async (text: string) => {
+    if (!manual && ctx.globalState.get('jqWarned')) { return; }
+    await ctx.globalState.update('jqWarned', true);
+    vscode.window.showWarningMessage(text);
+  };
   if (process.platform !== 'win32') {
-    vscode.window.showWarningMessage('AI Git Pilot: Terminal hook needs jq. Run: brew install jq  or  apt install jq');
-    return;
+    await warnOnce('AI Git Pilot: The terminal hook needs jq. Install it with "brew install jq" or "sudo apt install jq".');
+    return false;
   }
-
   try {
     await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: 'AI Git Pilot: Downloading jq for terminal hook...', cancellable: false },
-      () => downloadFile(
-        'https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe',
-        jqInHooks
-      )
-    );
-    fs.chmodSync(jqInHooks, 0o755);
-  } catch {
-    vscode.window.showWarningMessage('AI Git Pilot: Could not download jq. Terminal hook disabled until jq is installed.');
+      { location: vscode.ProgressLocation.Notification, title: 'AI Git Pilot: Downloading jq for the terminal hook…' },
+      () => hook.downloadJq());
+    return true;
+  } catch (err) {
+    await warnOnce(`AI Git Pilot: Could not download jq (${errText(err)}). The terminal hook stays off until jq is installed.`);
+    return false;
   }
 }
-function openManual(context: vscode.ExtensionContext): void {
-  const manualUri = vscode.Uri.joinPath(context.extensionUri, 'MANUAL.md');
-  vscode.commands.executeCommand('markdown.showPreview', manualUri);
+
+/** Points git's global core.hooksPath at our folder, asking first if it points elsewhere. */
+async function ensureHooksPath(manual: boolean): Promise<boolean> {
+  const current = await hook.getGlobalHooksPath();
+  if (hook.isOurHooksPath(current)) {
+    await ctx.globalState.update('hooksPathSet', true);
+    return true;
+  }
+  if (!current) {
+    // We set it before and it is gone now: the user unset it, so only a manual install sets it again.
+    if (!manual && ctx.globalState.get('hooksPathSet')) { return false; }
+    await hook.setGlobalHooksPath(hook.HOOKS_DIR);
+    await ctx.globalState.update('hooksPathSet', true);
+    return true;
+  }
+  const use = 'Use AI Git Pilot Hooks';
+  const takeOver = async () => {
+    await ctx.globalState.update('previousHooksPath', current);
+    await hook.setGlobalHooksPath(hook.HOOKS_DIR);
+    await ctx.globalState.update('hooksPathSet', true);
+  };
+  if (!manual) {
+    // Not awaited: a notification can sit unanswered for the whole session.
+    if (ctx.globalState.get('hooksPathConflict') !== current) {
+      await ctx.globalState.update('hooksPathConflict', current);
+      vscode.window.showWarningMessage(
+        `AI Git Pilot: git's global core.hooksPath already points to ${current}, so the AI hook is not active outside VS Code.`, use)
+        .then(choice => { if (choice === use) { void takeOver(); } });
+    }
+    return false;
+  }
+  const choice = await vscode.window.showWarningMessage(`git's global core.hooksPath already points to ${current}. Point it to ${hook.HOOKS_DIR} instead?`, {
+    modal: true,
+    detail: `Hooks in ${current} stop running. Each repository's own .git/hooks keep running. Uninstalling AI Git Pilot's hook restores ${current}.`,
+  }, use);
+  if (choice !== use) { return false; }
+  await takeOver();
+  return true;
+}
+
+/**
+ * Installs or refreshes the hook scripts, their config, the shell source line and
+ * core.hooksPath. Quiet when run at startup (`manual` false); files are only rewritten
+ * when their content changed.
+ */
+async function installHook(manual: boolean): Promise<void> {
+  if (hookBusy) { return; }
+  hookBusy = true;
+  try {
+    if (manual && !cfg<boolean>('globalHook', true)) {
+      await vscode.workspace.getConfiguration('aigitpilot').update('globalHook', true, vscode.ConfigurationTarget.Global);
+    }
+    const jq = await ensureJq(manual);
+    const files = hook.installHookFiles(path.join(ctx.extensionPath, 'hooks'));
+    await syncHookConfig();
+    const rcFiles = hook.addShellSourceLines();
+    const active = await ensureHooksPath(manual);
+
+    if (files.skipped.includes('prepare-commit-msg') && (manual || !ctx.globalState.get('foreignHookWarned'))) {
+      await ctx.globalState.update('foreignHookWarned', true);
+      vscode.window.showWarningMessage(`AI Git Pilot: ${path.join(hook.HOOKS_DIR, 'prepare-commit-msg')} was not written by AI Git Pilot, so it was left alone. The terminal shortcuts still work.`);
+    }
+    if (manual) {
+      if (active) {
+        vscode.window.showInformationMessage(`AI Git Pilot: Global hook installed in ${hook.HOOKS_DIR}. Open a new terminal to use the shortcuts.`
+          + (jq ? '' : ' The hook needs jq before it can write messages.'));
+      }
+    } else if ((files.changed.length || rcFiles.length) && !ctx.globalState.get('hookNoticeShown')) {
+      await ctx.globalState.update('hookNoticeShown', true);
+      vscode.window.showInformationMessage(
+        `AI Git Pilot: Installed its git hook and terminal shortcuts in ${hook.HOOKS_DIR}. Your repositories' own hooks keep running.`,
+        'Open Manual', 'Uninstall')
+        .then(action => {
+          if (action === 'Open Manual') { openManual(); }
+          else if (action === 'Uninstall') { void uninstallHook(); }
+        });
+    }
+  } catch (err) {
+    if (manual) { vscode.window.showErrorMessage(`AI Git Pilot: Could not install the hook: ${errText(err)}`); }
+  } finally {
+    hookBusy = false;
+  }
+}
+
+async function uninstallHook(): Promise<void> {
+  const choice = await vscode.window.showWarningMessage('Remove AI Git Pilot\'s global git hook and terminal shortcuts?', {
+    modal: true,
+    detail: `Deletes AI Git Pilot's files in ${hook.HOOKS_DIR} and ${hook.CONFIG_DIR}, removes its line from your shell rc files and restores git's core.hooksPath. Your VS Code settings and saved API keys stay.`,
+  }, 'Remove');
+  if (choice !== 'Remove') { return; }
+  hookBusy = true;
+  try {
+    await vscode.workspace.getConfiguration('aigitpilot').update('globalHook', false, vscode.ConfigurationTarget.Global);
+    if (hook.isOurHooksPath(await hook.getGlobalHooksPath())) {
+      await hook.setGlobalHooksPath(ctx.globalState.get<string>('previousHooksPath'));
+    }
+    const result = hook.removeHookFiles();
+    for (const key of ['hooksPathSet', 'previousHooksPath', 'hooksPathConflict', 'hookNoticeShown']) {
+      await ctx.globalState.update(key, undefined);
+    }
+    vscode.window.showInformationMessage('AI Git Pilot: Removed the global hook. Terminals that are already open keep the shortcuts until you close them.'
+      + (result.kept.length ? ` Left alone (not written by AI Git Pilot): ${result.kept.join(', ')}.` : ''));
+  } catch (err) {
+    vscode.window.showErrorMessage(`AI Git Pilot: Could not remove the hook: ${errText(err)}`);
+  } finally {
+    hookBusy = false;
+  }
+}
+
+async function onSettingsChanged(e: vscode.ConfigurationChangeEvent): Promise<void> {
+  if (!e.affectsConfiguration('aigitpilot')) { return; }
+  if (Object.values(KEY_SETTING).some(k => e.affectsConfiguration(`aigitpilot.${k}`))) {
+    await migrateKeysToSecrets();
+  }
+  if (hookBusy) { return; }
+  if (e.affectsConfiguration('aigitpilot.globalHook')) {
+    if (cfg<boolean>('globalHook', true)) { await installHook(true); return; }
+    if (hook.isInstalled()) {
+      const action = await vscode.window.showInformationMessage('AI Git Pilot: The global hook will no longer be kept up to date. Remove it now?', 'Uninstall');
+      if (action) { await uninstallHook(); }
+    }
+    return;
+  }
+  if (cfg<boolean>('globalHook', true) && hook.isInstalled()) { await syncHookConfig(); }
+}
+
+// ── activate ──────────────────────────────────────────────────────────────────
+
+function openManual(): void {
+  vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.joinPath(ctx.extensionUri, 'MANUAL.md'));
+}
+
+async function isConfigured(): Promise<boolean> {
+  if (vscode.workspace.getConfiguration('aigitpilot').inspect('provider')?.globalValue !== undefined) { return true; }
+  for (const p of Object.keys(KEY_SETTING) as KeyedProvider[]) {
+    if (await getApiKey(p)) { return true; }
+  }
+  return false;
+}
+
+async function startup(): Promise<void> {
+  const moved = await migrateKeysToSecrets().catch(() => 0);
+  if (moved) {
+    vscode.window.showInformationMessage(`AI Git Pilot: Moved ${moved === 1 ? 'your API key' : `${moved} API keys`} into VS Code's secret storage, out of plain-text settings.`);
+  }
+  if (!ctx.globalState.get('setupDone') && !(await isConfigured())) {
+    vscode.window.showInformationMessage('AI Git Pilot: Write commit messages with free AI models. Set up a provider?', 'Setup Now', 'Later')
+      .then(action => { if (action === 'Setup Now') { void runSetup(); } });
+  }
+  if (cfg<boolean>('globalHook', true)) { await installHook(false); }
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  ctx = context;
+  initSecrets(context.secrets);
   context.subscriptions.push(
     vscode.commands.registerCommand('aigitpilot.generate', generateCommitMessage),
-    vscode.commands.registerCommand('aigitpilot.setup', runSetup),
-    vscode.commands.registerCommand('aigitpilot.installHook', installGlobalHook),
-    vscode.commands.registerCommand('aigitpilot.openManual', () => openManual(context)),
-  );
-
-  // First-run setup prompt
-  const hasSetup = context.globalState.get<boolean>('setupDone');
-  if (!hasSetup) {
-    vscode.window.showInformationMessage(
-      'AI Git Pilot: Generate AI commit messages for free. Set up your provider.',
-      'Setup Now', 'Later'
-    ).then(action => {
-      if (action === 'Setup Now') {
-        runSetup();
-        context.globalState.update('setupDone', true);
+    vscode.commands.registerCommand('aigitpilot.setup', () => runSetup()),
+    vscode.commands.registerCommand('aigitpilot.installHook', () => installHook(true)),
+    vscode.commands.registerCommand('aigitpilot.uninstallHook', uninstallHook),
+    vscode.commands.registerCommand('aigitpilot.openManual', openManual),
+    vscode.workspace.onDidChangeConfiguration(e => { void onSettingsChanged(e); }),
+    context.secrets.onDidChange(e => {
+      if (e.key.startsWith('aigitpilot.') && !hookBusy && cfg<boolean>('globalHook', true) && hook.isInstalled()) {
+        void syncHookConfig();
       }
-    });
-  }
-
-  // Auto-install global hook and requirements on every activate
-  const hooksDir = require('path').join(require('os').homedir(), '.git-hooks');
-  ensureRequirements(hooksDir).then(() => installGlobalHook()).catch(() => { /* silent */ });
+    }),
+  );
+  void startup();
 }
 
 export function deactivate(): void { /* nothing */ }
-

@@ -1,0 +1,13 @@
+#!/bin/sh
+# AI Git Pilot passthrough hook (aigitpilot:managed).
+# Installed by the AI Git Pilot VS Code extension, which overwrites local edits.
+#
+# A global core.hooksPath makes git ignore every repository's .git/hooks. This file stands
+# in for one hook name and runs the repository's own hook of that name, so pre-commit
+# linters, commitlint, Git LFS and similar keep working.
+
+LOCAL=$(git rev-parse --git-common-dir 2>/dev/null) || exit 0
+LOCAL="$LOCAL/hooks/${0##*/}"
+[ -f "$LOCAL" ] && [ -x "$LOCAL" ] || exit 0
+[ "$(cd "$(dirname "$LOCAL")" && pwd)" = "$(cd "$(dirname "$0")" && pwd)" ] && exit 0
+exec "$LOCAL" "$@"

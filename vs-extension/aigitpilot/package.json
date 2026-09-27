@@ -1,8 +1,8 @@
 {
   "name": "aigitpilot",
   "displayName": "AI Git Pilot",
-  "description": "AI-powered commit messages using free models — Ollama, Groq, Gemini. No paid API required.",
-  "version": "0.0.4",
+  "description": "AI-powered commit messages using free models — Ollama, Groq, Gemini, OpenRouter. No paid API required.",
+  "version": "0.0.3",
   "publisher": "somshrestha",
   "icon": "icon.png",
   "repository": {
@@ -11,7 +11,7 @@
   },
   "engines": { "vscode": "^1.80.0" },
   "categories": ["Other"],
-  "keywords": ["git", "commit", "ai", "ollama", "groq", "gemini", "commit message", "conventional commits"],
+  "keywords": ["git", "commit", "ai", "ollama", "groq", "gemini", "commit message", "conventional commits", "openrouter"],
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
@@ -28,6 +28,10 @@
       {
         "command": "aigitpilot.installHook",
         "title": "AI Git Pilot: Install Global Git Hook"
+      },
+      {
+        "command": "aigitpilot.uninstallHook",
+        "title": "AI Git Pilot: Uninstall Global Git Hook"
       },
       {
         "command": "aigitpilot.openManual",
@@ -65,22 +69,32 @@
         "aigitpilot.groqApiKey": {
           "type": "string",
           "default": "",
-          "description": "Groq API key (free at console.groq.com)."
+          "markdownDescription": "Plain-text fallback for the Groq API key. Prefer **AI Git Pilot: Setup / Change Provider**, which keeps the key in VS Code's secret storage. A key entered here is moved there automatically."
         },
         "aigitpilot.groqModel": {
           "type": "string",
-          "default": "llama-3.3-70b-versatile",
-          "description": "Groq model to use."
+          "default": "openai/gpt-oss-20b",
+          "description": "Groq model to use. Run the setup wizard to pick from the models Groq offers right now."
+        },
+        "aigitpilot.geminiModel": {
+          "type": "string",
+          "default": "gemini-flash-latest",
+          "description": "Gemini model to use. gemini-flash-latest always points to the newest Flash model."
         },
         "aigitpilot.geminiApiKey": {
           "type": "string",
           "default": "",
-          "description": "Google Gemini API key (free at aistudio.google.com)."
+          "markdownDescription": "Plain-text fallback for the Gemini API key. Prefer **AI Git Pilot: Setup / Change Provider**, which keeps the key in VS Code's secret storage. A key entered here is moved there automatically."
         },
         "aigitpilot.openrouterApiKey": {
           "type": "string",
           "default": "",
-          "description": "OpenRouter API key (free models available at openrouter.ai)."
+          "markdownDescription": "Plain-text fallback for the OpenRouter API key. Prefer **AI Git Pilot: Setup / Change Provider**, which keeps the key in VS Code's secret storage. A key entered here is moved there automatically."
+        },
+        "aigitpilot.openrouterModel": {
+          "type": "string",
+          "default": "openrouter/free",
+          "description": "OpenRouter model to use. openrouter/free routes to a free model that is available."
         },
         "aigitpilot.style": {
           "type": "string",
@@ -96,17 +110,37 @@
         "aigitpilot.customInstructions": {
           "type": "string",
           "default": "",
-          "description": "Extra instructions for the AI. E.g. 'Always include ticket number from branch name'."
+          "description": "Extra instructions for the AI. E.g. 'Always include the ticket number from the branch name'."
         },
         "aigitpilot.maxDiffSize": {
           "type": "number",
           "default": 8000,
-          "description": "Max diff characters to send to AI. Larger diffs are summarized."
+          "description": "Max diff characters sent to the AI. Larger diffs are cut down so every file still gets a share."
         },
         "aigitpilot.excludeFiles": {
           "type": "array",
           "default": ["package-lock.json", "yarn.lock", "composer.lock", "*.min.js", "*.min.css"],
-          "description": "Files to exclude from the diff before sending to AI."
+          "description": "Glob patterns for files whose diff is not sent to the AI (they are still listed by name). A pattern without a slash matches in any folder."
+        },
+        "aigitpilot.matchRepoStyle": {
+          "type": "boolean",
+          "default": true,
+          "description": "Send the repository's last 10 commit subjects so messages match its scopes, ticket references and wording."
+        },
+        "aigitpilot.globalHook": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Keep the global git hook and terminal integration in `~/.git-hooks` installed and up to date. Turning this off stops updates; run **AI Git Pilot: Uninstall Global Git Hook** to remove the files."
+        },
+        "aigitpilot.terminalSuggestOnAdd": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "In a terminal, offer an AI commit message right after `git add`. When off, the offer comes only with `git commit`."
+        },
+        "aigitpilot.shellShortcuts": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Define the terminal shortcuts (`add`, `push`, `pull`, `s`, `log`, `co`, …) in interactive bash and zsh shells."
         }
       }
     }
@@ -114,7 +148,8 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package --no-dependencies --allow-star-activation"
+    "package": "vsce package --no-dependencies --allow-star-activation",
+    "test": "tsc -p ./ && node --test test/"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",

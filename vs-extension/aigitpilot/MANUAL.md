@@ -4,7 +4,7 @@
 
 1. Open VS Code
 2. Press `Ctrl+Shift+P` → **Extensions: Install from VSIX**
-3. Select `aigitpilot-0.0.2.vsix`
+3. Select the `aigitpilot-<version>.vsix` file
 4. Reload VS Code when prompted
 
 ---
@@ -13,33 +13,36 @@
 
 Press `Ctrl+Shift+P` → type **AI Git Pilot: Setup** → Enter
 
-You will be asked:
-1. **Choose a provider** (Groq recommended for beginners)
-2. **Paste your API key**
-3. **Choose commit style** (conventional / short / detailed)
+You will be asked to:
+1. **Choose a provider** (Groq is the quickest start; Ollama is fully local)
+2. **Keep, paste or get an API key** (not for Ollama). "Get a free key" opens the provider's key page, then asks for the key
+3. **Choose a model** from the provider's current list. For Ollama, models you have pulled are listed first
+4. **Choose a commit style** (conventional / short / detailed)
 
-The extension automatically:
-- Downloads `jq` if not installed
-- Installs a global git hook (`~/.git-hooks/prepare-commit-msg`)
+Setup then sends a tiny test request and tells you how fast the provider answered, so a wrong key or model shows up now instead of at your first commit.
+
+The extension also, on startup:
+- Downloads `jq` on Windows if it is missing
+- Installs a global git hook in `~/.git-hooks/`
 - Adds shell integration to `.bashrc` / `.zshrc`
 
 ---
 
 ## Getting API Keys (Free)
 
-### Groq (fastest, 1000 req/day free)
-1. Go to [console.groq.com](https://console.groq.com)
-2. Sign up → **API Keys** → **Create API Key**
+### Groq (fastest)
+1. Go to [console.groq.com/keys](https://console.groq.com/keys)
+2. Sign up → **Create API Key**
 3. Copy the key (starts with `gsk_...`)
 
-### Google Gemini (1500 req/day free)
-1. Go to [aistudio.google.com](https://aistudio.google.com)
-2. Sign in → **Get API Key** → **Create API key**
+### Google Gemini
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Sign in → **Create API key**
 3. Copy the key (starts with `AIza...`)
 
 ### OpenRouter (free models available)
-1. Go to [openrouter.ai](https://openrouter.ai)
-2. Sign up → **Keys** → **Create Key**
+1. Go to [openrouter.ai/keys](https://openrouter.ai/keys)
+2. Sign up → **Create Key**
 3. Copy the key
 
 ### Ollama (fully local, unlimited, private)
@@ -51,66 +54,68 @@ The extension automatically:
 
 ## Adding / Changing API Key
 
-**Method 1 — Setup wizard (easiest)**
-`Ctrl+Shift+P` → **AI Git Pilot: Setup** → pick provider → paste key
+**Setup wizard (recommended)**
+`Ctrl+Shift+P` → **AI Git Pilot: Setup** → pick provider → **Paste a key**
 
-**Method 2 — VS Code Settings**
-`Ctrl+,` → search `aigitpilot` → fill in the field for your provider
+Keys are kept in VS Code's secret storage (your OS keychain), not in `settings.json`, so Settings Sync never uploads them. The terminal hook needs the key too, so it is also written to `~/.config/aigitpilot/config.json` while the global hook is installed.
+
+**VS Code Settings (fallback)**
+A key typed into `aigitpilot.groqApiKey`, `aigitpilot.geminiApiKey` or `aigitpilot.openrouterApiKey` still works: AI Git Pilot moves it into secret storage and clears the setting.
 
 | Field | Description |
 |-------|-------------|
 | `aigitpilot.provider` | Active provider: `groq` / `gemini` / `openrouter` / `ollama` |
-| `aigitpilot.groqApiKey` | Your Groq key |
-| `aigitpilot.geminiApiKey` | Your Gemini key |
-| `aigitpilot.openrouterApiKey` | Your OpenRouter key |
+| `aigitpilot.groqModel`, `geminiModel`, `openrouterModel`, `ollamaModel` | Model for each provider |
 
 ---
 
 ## Using in VS Code
 
-1. Make changes to your code
+1. Make changes to your code (stage them if you want the message to cover only part)
 2. Open **Source Control** panel (`Ctrl+Shift+G`)
-3. Click **✨** (sparkle) in the panel title bar
-4. Extension auto-stages all changes and generates a message
-5. An input box opens — edit the message if needed
-6. Press **Enter** to commit, **Escape** to cancel
+3. Click **✨** (sparkle) in the panel title bar of the repository you want
+4. The message appears in that repository's commit box. Edit it if needed
+5. Commit as usual (`Ctrl+Enter`)
+
+Tips:
+- Type a short note in the commit box first ("fixes the login race") and ✨ turns it into a proper message
+- If nothing is staged, the message covers all changes; VS Code offers to stage them when you commit
+- Click ✨ again for another message; **Cancel** in the notification stops a slow request
 
 ---
 
 ## Using in Terminal
 
-Open a Git Bash terminal inside VS Code (`Ctrl+`` `).
+Open a bash or zsh terminal (Git Bash on Windows) — a new one after installing.
 
 **Flow after `git add`:**
 ```bash
 $ git add .
-# AI generates message, shows editable prompt:
-som@PC MINGW64 ~/myproject (main)
-$ git commit -m "feat(api): add pagination to user list"   ← edit here
+$ git commit -m feat(api): add pagination to user list   ← edit here
 ```
-Edit the message, press Enter to commit.
+Edit the message and press Enter to commit. Clear the line or press Ctrl+C to cancel.
 
-**Flow with `git commit` (no `-m`):**
-```bash
-$ git commit
-# AI generates message, shows editable prompt
-```
+**Flow with `git commit` (no `-m`):** the same prompt appears. Extra flags such as `-s`, `-S` or `--no-verify` are kept; other flags go straight to git.
+
+**Multi-line messages** (detailed style) are shown in full with `Commit with this message? [Y]es / [e]dit / [n]o`. `e` opens your editor with the message filled in.
+
+Turn off the offer after `git add` with `aigitpilot.terminalSuggestOnAdd`; `git commit` still offers one.
 
 ---
 
 ## Shell Shortcuts
 
-These work in any Git Bash terminal after restarting it.
+These work in interactive bash and zsh after opening a new terminal. Your own aliases of the same name take priority, and scripts keep the real commands.
 
 | Command | Does |
 |---------|------|
-| `add` | `git add .` then shows AI commit suggestion |
+| `add` | `git add .` then shows AI commit suggestion (`add <files>` adds just those) |
 | `push` | `git push origin <current-branch>` |
 | `pull` | `git pull origin <current-branch>` |
 | `mas` | `git pull origin master` |
 | `mn` | `git pull origin main` |
 | `d` | `git pull origin develop` |
-| `s` | `git status --short` |
+| `s` / `status` | `git status --short` |
 | `log` | `git log --oneline --graph --decorate -15` |
 | `co <branch>` | `git checkout <branch>` |
 | `cb <name>` | `git checkout -b <name>` (new branch) |
@@ -128,7 +133,7 @@ These work in any Git Bash terminal after restarting it.
 | `tag <name>` | `git tag <name>` |
 | `clone <url>` | `git clone <url>` |
 
-> **Note:** Shortcuts activate after opening a new terminal (or running `source ~/.bashrc`).
+> **Note:** Shortcuts activate after opening a new terminal (or running `source ~/.bashrc`). Turn them off with `aigitpilot.shellShortcuts`.
 
 ---
 
@@ -147,22 +152,34 @@ Change via `Ctrl+,` → search `aigitpilot.style`
 ## Troubleshooting
 
 **"No git repository found"**
-Open a file inside a git repository, then click ✨ again.
+Open a folder or file inside a git repository, then click ✨ again.
 
-**"No staged changes"**
-Run `git add .` first (or let the ✨ button do it automatically).
+**"No changes to describe"**
+The working tree is clean; there is nothing to commit.
 
-**"Cannot reach groq / ollama"**
-- Groq: check API key is correct in settings
-- Ollama: make sure Ollama app is running (`ollama serve`)
+**"Cannot reach Ollama"**
+Start the Ollama app or run `ollama serve`. Check `aigitpilot.ollamaUrl`.
+
+**"Ollama does not have the model"**
+Click **Pull Model** (runs `ollama pull <model>` in a terminal) or **Choose Model**.
+
+**"… no longer offers …, so AI Git Pilot switched to …"**
+The cloud provider retired your model. The message was still written with the replacement, which is now saved. Click **Choose Model** to pick another.
+
+**"rejected the API key" / answered 401**
+Click **Set API Key** and paste a new key.
+
+**Rate limit reached (429)**
+Wait a bit, or switch provider in setup.
 
 **Shortcuts not working in terminal**
 Open a **new** terminal — existing terminals need `source ~/.bashrc` to pick up the shell integration.
 
-**AI returns empty response**
-- Check API key is valid
-- Check you have remaining quota (Groq: console.groq.com → Usage)
-- Try switching provider via setup wizard
+**Terminal offers no message**
+Check that `jq` and `curl` are installed, and that `~/.config/aigitpilot/config.json` exists (run **AI Git Pilot: Install Global Git Hook**).
+
+**A repository's own hooks stopped running**
+Run **AI Git Pilot: Install Global Git Hook** again: it adds stubs that run each repository's `.git/hooks`.
 
 ---
 
@@ -170,20 +187,16 @@ Open a **new** terminal — existing terminals need `source ~/.bashrc` to pick u
 
 `Ctrl+Shift+P` → **AI Git Pilot: Install Global Git Hook**
 
-This re-installs the git hook, shell integration, and downloads jq if missing.
+This re-installs the git hook, shell integration, and downloads jq if missing. If git's `core.hooksPath` already points to another folder, you are asked before it changes.
 
 ---
 
 ## Uninstalling
 
-1. Remove the extension from VS Code Extensions panel
-2. To remove shell integration: delete the source line from `~/.bashrc`:
-   ```
-   # AI Git Pilot
-   [ -f "$HOME/.git-hooks/aigitpilot-shell.sh" ] && . "$HOME/.git-hooks/aigitpilot-shell.sh"
-   ```
-3. To remove global hook: `git config --global --unset core.hooksPath`
-4. Optionally delete `~/.git-hooks/` folder
+1. `Ctrl+Shift+P` → **AI Git Pilot: Uninstall Global Git Hook**. This deletes AI Git Pilot's files in `~/.git-hooks/` and `~/.config/aigitpilot/`, removes its line from `~/.bashrc` / `~/.zshrc`, and restores `core.hooksPath` to what it was before (or unsets it)
+2. Remove the extension from the VS Code Extensions panel
+
+Open terminals keep the shortcuts until you close them.
 
 ---
 

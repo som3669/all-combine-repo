@@ -1,0 +1,26 @@
+#!/bin/sh
+# AI Git Pilot global hook (aigitpilot:managed).
+# Installed by the AI Git Pilot VS Code extension, which overwrites local edits.
+#
+# When git opens the editor for a new commit (no -m, -F, -c, -C, --amend, merge, squash or
+# template), puts an AI message above git's comment lines so you can review it there.
+# Then runs the repository's own prepare-commit-msg hook, which the global
+# core.hooksPath would otherwise skip. Set AIGITPILOT_SKIP=1 to turn the AI part off.
+
+MSG_FILE=$1
+SOURCE=$2
+DIR=$(cd "$(dirname "$0")" && pwd)
+
+if [ -z "$SOURCE" ] && [ -z "$AIGITPILOT_SKIP" ] && [ -f "$MSG_FILE" ]; then
+  MESSAGE=$(sh "$DIR/aigitpilot-message.sh" 2>/dev/null)
+  if [ -n "$MESSAGE" ]; then
+    { printf '%s\n' "$MESSAGE"; cat "$MSG_FILE"; } > "$MSG_FILE.aigitpilot" && mv "$MSG_FILE.aigitpilot" "$MSG_FILE"
+    printf '\033[1;36m✨ AI Git Pilot:\033[0m %s\n' "$(printf '%s\n' "$MESSAGE" | head -n 1)" >&2
+  fi
+fi
+
+LOCAL=$(git rev-parse --git-common-dir 2>/dev/null) || exit 0
+LOCAL="$LOCAL/hooks/prepare-commit-msg"
+[ -f "$LOCAL" ] && [ -x "$LOCAL" ] || exit 0
+[ "$(cd "$(dirname "$LOCAL")" && pwd)" = "$DIR" ] && exit 0
+exec "$LOCAL" "$@"
