@@ -3,7 +3,7 @@
 VS Code extension (plus a Node CLI) that captures each logged-in Claude Code account as a named profile and swaps credentials on demand, without re-signing in.
 
 - Id `somshrestha.somshrestha-claude-account-switcher`, MIT. Own repo: https://github.com/som3669/claude-account-switcher
-- Current: v0.1.2 (2026-09-04), installed locally from the `.vsix`; pushed to `main`. Not published to the Marketplace (checked 2026-09-04: needs Azure DevOps PAT for publisher `somshrestha`). No git tags.
+- Current: v0.1.3 (2026-09-26), live on the Marketplace since 2026-09-26T07:35Z. On the VS Code Marketplace as `somshrestha.somshrestha-claude-account-switcher` (0.1.2 published 2026-09-04T03:49Z, confirmed via the gallery API 2026-09-26); pushed to `main`. No git tags. No vsce login is stored on this machine and there is no publish workflow: publishing needs an Azure DevOps PAT (Marketplace > Manage scope) for publisher `somshrestha`. The Marketplace rejects re-publishing an existing version.
 - The parent repo (som-personal / vs-code-extenstion-setup) also still has an older tracked copy of this folder from 2026-07; this folder's own repo is the source of truth.
 
 ## Stack
@@ -29,8 +29,16 @@ VS Code commands: `Claude Account: Switch` (also the status bar item), `Capture 
   1. Claude Code rotates the refresh token on every refresh, so a profile snapshotted at capture time went stale. Now the active profile is re-snapshotted on every `.credentials.json` change (fs.watch, debounced 1.5s) and on shutdown.
   2. Snapshotting while signed out / mid-login wrote empty `accessToken`/`refreshToken` over a good profile. Every save and restore is now gated by `checkCredentials()`; each save keeps a `.bak`; broken profiles are flagged (warning icon, `[BROKEN: reason]` in `--list`) and need confirmation / `--force`.
   Also: reads of `.credentials.json` retry (mid-write reads), files written mode 0600, failed atomic write removes its `.tmp-*`.
+- 0.1.3 (2026-09-26), login screen still appeared after 0.1.2:
+  1. The old 0.1.0 build (id `somshrestha.claude-account-switcher`) was still installed next to 0.1.2 with the same command ids. Exthost logs showed only 0.1.0 activating, so none of the 0.1.2 fixes ran. The extension now warns and offers to uninstall it (0.1.0 was removed from this machine on 2026-09-26).
+  2. `.claude.json` is not proof of who owns `.credentials.json`: a Claude Code process still running as the old account refreshes and writes its tokens after a switch. Ownership is now checked via `GET https://api.anthropic.com/api/oauth/profile` (Bearer access token, `anthropic-beta: oauth-2025-04-20`, returns `account.uuid`), cached per refresh token (sha256). Foreign tokens are rerouted to their real profile. The shutdown/deactivate snapshot only saves tokens whose owner is already cached, because it can't await.
+  3. Snapshot on startup; after the switch-away snapshot, re-read the target profile from disk (the snapshot can reroute fresher tokens into it; a test caught the stale in-memory copy being applied).
+  4. (2026-09-27) Point 1 was only half true. The user's windows run the custom VS Code profile `Som`, and every install/uninstall above had gone to the Default profile. The `Som` profile kept 0.1.0 until 2026-09-27, so neither 0.1.2 nor 0.1.3 had ever run there. The 0.1.0 switch snapshot then saved Claude Code's blanked login over the `som` profile. Install with `--profile Som`; see ../CLAUDE.md.
+  How a dead token looks: after a rejected refresh, Claude Code rewrites `.credentials.json` with `accessToken: ""`, `refreshToken: ""`, `expiresAt: 0`, keeping `refreshTokenExpiresAt`/`scopes`, then shows the login screen. `checkCredentials()` already rejects this shape.
+  An accepted access token does not prove the refresh token still works: refreshing revokes the old refresh token, but the old access token stays valid until it expires.
+  Test safely with a fake home: copy `~/.claude/.credentials.json`, `~/.claude/account-switcher/`, `~/.claude.json` to a scratch dir and run the CLI with `USERPROFILE=<dir> HOME=<dir>`. Compare sha1 prefixes of refresh tokens, never print them.
 - Fixes must be mirrored in both `src/extension.ts` and `scripts/claude-switch.js`.
 - Restart running Claude Code sessions after a switch.
 
 ## Open items
-- Marketplace publish not done (user decision; publishing is one-way public).
+- None. 0.1.3 is live on the Marketplace (confirmed 2026-09-27) and running in the Som profile.

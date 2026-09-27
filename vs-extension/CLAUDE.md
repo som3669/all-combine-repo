@@ -20,9 +20,10 @@ Check with `git -C <dir> remote get-url origin`. The account-switcher and import
 - Machine Node is v20.12.2. Use `@vscode/vsce@2.32.0` (local installs already are 2.32.0); newer vsce needs Node 22+ and crashes with `TypeError [ERR_INVALID_ARG_VALUE]` from `styleText`.
 - `.vsix`, `out/`, `node_modules/` are gitignored everywhere.
 - Never bump a version without asking the user; releasing/publishing is a user decision.
-- Marketplace publishing needs an Azure DevOps PAT for publisher `somshrestha` (only Token Meter is on the Marketplace, via its GitHub Actions workflow).
+- Marketplace publishing needs an Azure DevOps PAT for publisher `somshrestha` (on the Marketplace: Token Meter via its GitHub Actions workflow, and the account switcher, published manually).
 
 ## VS Code extension testing gotchas (learned on claude-prompt-monitor, 2026-09)
+- **Install into the "Som" profile.** Som's windows use a custom VS Code profile named `Som` (id `20276808`), not Default. `code --install-extension` / `--uninstall-extension` without `--profile Som` only change Default, silently. This kept the account switcher on 0.1.0 through two fix releases (found 2026-09-27). Use `code --install-extension <vsix> --profile Som --force`. Check `%APPDATA%\Code\User\profiles\20276808\extensions.json` and `_doActivateExtension <full id>` in exthost.log; a folder under `~/.vscode/extensions` proves nothing.
 - **A window runs the build it started with.** `code --install-extension ... --force` replaces files on disk but an open window keeps running the JS it loaded at startup, silently. Always tell the user to reload the window after installing. Check: extension host start time in `%APPDATA%\Code\logs\<stamp>\window*\exthost\exthost.log` vs the installed `out/*.js` mtime.
 - **`detached: true` kills GUI child processes on Windows.** Node maps it to DETACHED_PROCESS; `powershell.exe` gets no console and exits 0 immediately. Spawn with `windowsHide: true`, `stdio: 'ignore'`, no `detached`; the child still outlives the parent.
 - **Process-list checks that grep command lines count themselves.** `CommandLine -like '*overlay.ps1*'` matches the querying PowerShell (and `Stop-Process` then kills the checker). Exclude `$PID`; prefer verifying the real window (EnumWindows + GetWindowRect).

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.3
+
+- **Fixed:** the login screen still appeared after switching. Two more causes:
+  - A Claude Code session left running as the previous account (another window, a
+    terminal) refreshes its token after the switch. That revokes the copy saved in the
+    profile, and its write to `.credentials.json` was then filed under the *new* account,
+    corrupting both profiles. Each token is now checked once against Anthropic's OAuth
+    profile endpoint, and the result is cached. Tokens that belong to another account are
+    filed under that account, and a warning offers to re-apply the intended one.
+  - Rotations made while VS Code was closed stayed out of the profile. The active account
+    is now re-snapshotted on startup, and a switch applies the target as re-read from disk.
+- **New:** warns about and offers to uninstall the old 0.1.0 build
+  (`somshrestha.claude-account-switcher`). Installed alongside, it took over the switch
+  commands and silently ran the old, ungated logic.
+
 ## 0.1.2
 
 - **Fixed:** switching back to an account showed the login screen. A profile stored the

@@ -2,6 +2,12 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as https from 'https';
+import * as crypto from 'crypto';
+
+// Pre-0.1.1 manifest id. Installed side by side it registers the same command
+// ids, wins the race, and runs its ungated snapshot logic instead of ours.
+const LEGACY_EXTENSION_ID = 'somshrestha.claude-account-switcher';
 
 // ---- Paths ----
 const HOME = os.homedir();
@@ -141,11 +147,76 @@ function findMatching(profiles: Profile[], email: string, accountUuid: string): 
   return profiles.find((p) => (accountUuid && p.accountUuid === accountUuid) || p.email === email);
 }
 
+// ---- Token ownership ----
+// .claude.json says which account is active, but .credentials.json can be
+// rewritten by any Claude Code process still running as the previous account
+// (another window, a terminal). Trusting .claude.json filed that account's
+// tokens under the new one, corrupting both profiles. So each token is checked
+// against Anthropic once, and the answer is cached for the token's lifetime.
+const tokenOwners = new Map<string, string>(); // sha256(refreshToken) -> accountUuid
+const foreignWarned = new Set<string>();
+
+function tokenKey(creds: any): string {
+  const r = creds?.claudeAiOauth?.refreshToken;
+  return typeof r === 'string' && r ? crypto.createHash('sha256').update(r).digest('hex') : '';
+}
+
+// Resolves the owning accountUuid, or null when it can't tell (offline,
+// expired access token, non-OAuth credentials).
+function fetchTokenOwner(creds: any): Promise<string | null> {
+  const access = creds?.claudeAiOauth?.accessToken;
+  if (typeof access !== 'string' || !access) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const req = https.get(
+      'https://api.anthropic.com/api/oauth/profile',
+      { headers: { Authorization: 'Bearer ' + access, 'anthropic-beta': 'oauth-2025-04-20' }, timeout: 8000 },
+      (res) => {
+        let body = '';
+        res.on('data', (c) => (body += c));
+        res.on('end', () => {
+          try {
+            const uuid = res.statusCode === 200 ? JSON.parse(body)?.account?.uuid : null;
+            resolve(typeof uuid === 'string' && uuid ? uuid : null);
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on('timeout', () => req.destroy());
+    req.on('error', () => resolve(null));
+  });
+}
+
+async function resolveTokenOwner(creds: any): Promise<string | null> {
+  const key = tokenKey(creds);
+  if (!key) return null;
+  const cached = tokenOwners.get(key);
+  if (cached) return cached;
+  const owner = await fetchTokenOwner(creds);
+  if (owner) tokenOwners.set(key, owner);
+  return owner;
+}
+
+function storeSnapshot(existing: Profile, live: Profile, reason: string): boolean {
+  if (JSON.stringify(existing.credentials) === JSON.stringify(live.credentials)) return false;
+  existing.credentials = live.credentials;
+  if (existing.accountUuid === live.accountUuid) {
+    existing.oauthAccount = live.oauthAccount;
+    existing.userID = live.userID;
+  }
+  existing.capturedAt = live.capturedAt;
+  saveProfile(existing);
+  log.appendLine('[' + new Date().toISOString() + '] snapshot saved (' + reason + '): ' + existing.label);
+  return true;
+}
+
 // Re-snapshot the live account into its matching profile. Claude Code rotates the
 // refresh token on every refresh, so a profile captured once goes stale within
 // hours; restoring that dead token is what forces the login screen.
-// Returns true when the profile was updated.
-function snapshotLiveIntoProfile(reason: string): boolean {
+// `offline` (shutdown paths, which cannot await) saves only tokens whose owner is
+// already cached. Returns true when a profile was updated.
+async function snapshotLiveIntoProfile(reason: string, offline = false): Promise<boolean> {
   const live = buildProfileFromLive();
   if (!live) return false;
   const check = checkCredentials(live.credentials);
@@ -154,16 +225,45 @@ function snapshotLiveIntoProfile(reason: string): boolean {
     log.appendLine('[' + new Date().toISOString() + '] snapshot skipped (' + reason + '): ' + check.reason);
     return false;
   }
-  const existing = findMatching(listProfiles(), live.email, live.accountUuid);
+  const profiles = listProfiles();
+  const owner = offline ? tokenOwners.get(tokenKey(live.credentials)) || null : await resolveTokenOwner(live.credentials);
+  if (offline && !owner) return false;
+
+  if (owner && live.accountUuid && owner !== live.accountUuid) {
+    // A session still signed in as another account refreshed and wrote its
+    // tokens. They are that account's newest (its older ones are now revoked),
+    // so file them there instead of dropping or misfiling them.
+    const real = profiles.find((p) => p.accountUuid === owner);
+    log.appendLine(
+      '[' + new Date().toISOString() + '] credentials belong to ' + (real ? real.email : owner) +
+      ', not the active ' + live.email + ' (' + reason + ')'
+    );
+    if (real) storeSnapshot(real, live, reason + ', rerouted');
+    warnForeignCredentials(live, real);
+    return !!real;
+  }
+
+  const existing = findMatching(profiles, live.email, live.accountUuid);
   if (!existing) return false;
-  if (JSON.stringify(existing.credentials) === JSON.stringify(live.credentials)) return false;
-  existing.credentials = live.credentials;
-  existing.oauthAccount = live.oauthAccount;
-  existing.userID = live.userID;
-  existing.capturedAt = live.capturedAt;
-  saveProfile(existing);
-  log.appendLine('[' + new Date().toISOString() + '] snapshot saved (' + reason + '): ' + existing.label);
-  return true;
+  return storeSnapshot(existing, live, reason);
+}
+
+function warnForeignCredentials(live: Profile, real: Profile | undefined): void {
+  const key = tokenKey(live.credentials);
+  if (foreignWarned.has(key)) return;
+  foreignWarned.add(key);
+  const intended = findMatching(listProfiles(), live.email, live.accountUuid);
+  const who = real ? real.email : 'another account';
+  const action = intended ? 'Re-apply ' + live.email : undefined;
+  const msg =
+    'A Claude Code session still signed in as ' + who + ' overwrote the credentials for ' + live.email +
+    '. Close other Claude Code windows and terminals' + (action ? ', then re-apply.' : '.');
+  const pending = action ? vscode.window.showWarningMessage(msg, action) : vscode.window.showWarningMessage(msg);
+  pending.then(async (pick) => {
+    if (!intended || pick !== action) return;
+    applyProfile(intended);
+    await vscode.commands.executeCommand('workbench.action.reloadWindow');
+  });
 }
 
 // Write a profile's credentials + identity into the live Claude Code files.
@@ -268,8 +368,9 @@ async function cmdSwitch(): Promise<void> {
   }
 
   try {
-    snapshotLiveIntoProfile('switching away'); // keep outgoing account's tokens fresh
-    applyProfile(target);
+    await snapshotLiveIntoProfile('switching away'); // keep outgoing account's tokens fresh
+    // The snapshot may have just filed fresher tokens under the target itself.
+    applyProfile((readJson(profilePath(target.label)) as Profile | null) || target);
   } catch (e: any) {
     vscode.window.showErrorMessage('Switch failed: ' + (e?.message || String(e)));
     return;
@@ -339,7 +440,14 @@ export function activate(context: vscode.ExtensionContext): void {
     /* non-fatal */
   }
 
+  warnLegacyInstall();
   updateStatusBar();
+
+  // Tokens rotated while VS Code was closed (terminal sessions) would otherwise
+  // stay out of the profile until the next rotation seen by the watcher.
+  snapshotLiveIntoProfile('startup').then(updateStatusBar, (e) =>
+    log.appendLine('startup snapshot failed: ' + (e?.message || String(e)))
+  );
 
   // Keep the bar in sync AND mirror rotated tokens back into the active profile.
   // Without this a profile only ever holds the token from the last switch, which
@@ -350,12 +458,9 @@ export function activate(context: vscode.ExtensionContext): void {
       if (file !== '.credentials.json') return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        try {
-          snapshotLiveIntoProfile('token rotated');
-        } catch (e: any) {
-          log.appendLine('snapshot failed: ' + (e?.message || String(e)));
-        }
-        updateStatusBar();
+        snapshotLiveIntoProfile('token rotated')
+          .catch((e: any) => log.appendLine('snapshot failed: ' + (e?.message || String(e))))
+          .then(updateStatusBar);
       }, 1500); // let Claude Code finish writing
     });
     context.subscriptions.push({
@@ -371,15 +476,27 @@ export function activate(context: vscode.ExtensionContext): void {
   // Safety net: snapshot on window close, in case the watcher missed a write.
   context.subscriptions.push({
     dispose: () => {
-      try { snapshotLiveIntoProfile('shutdown'); } catch { /* ignore */ }
+      snapshotLiveIntoProfile('shutdown', true).catch(() => { /* ignore */ });
     },
   });
 }
 
+function warnLegacyInstall(): void {
+  if (!vscode.extensions.getExtension(LEGACY_EXTENSION_ID)) return;
+  vscode.window
+    .showWarningMessage(
+      'An old Claude Account Switcher build (0.1.0) is also installed. It takes over the switch commands and ' +
+      'saves stale tokens, which causes the login screen after switching. Uninstall it?',
+      'Uninstall'
+    )
+    .then(async (pick) => {
+      if (pick !== 'Uninstall') return;
+      await vscode.commands.executeCommand('workbench.extensions.uninstallExtension', LEGACY_EXTENSION_ID);
+      await vscode.commands.executeCommand('workbench.action.reloadWindow');
+    });
+}
+
 export function deactivate(): void {
-  try {
-    snapshotLiveIntoProfile('deactivate');
-  } catch {
-    /* ignore */
-  }
+  // Offline: the extension host will not wait for a network check here.
+  snapshotLiveIntoProfile('deactivate', true).catch(() => { /* ignore */ });
 }

@@ -14,6 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const https = require('https');
 const readline = require('readline');
 
 const HOME = os.homedir();
@@ -110,7 +111,42 @@ function buildProfileFromLive(label) {
 function sameAccount(live, p) {
   return !!live && ((live.accountUuid && p.accountUuid === live.accountUuid) || p.email === live.email);
 }
-function refreshCurrentProfileSnapshot() {
+// .credentials.json can be rewritten by a Claude Code process still running as
+// the previous account, so ask Anthropic who owns the token instead of trusting
+// .claude.json. Resolves null when it can't tell (offline, expired token).
+function fetchTokenOwner(creds) {
+  const access = creds && creds.claudeAiOauth && creds.claudeAiOauth.accessToken;
+  if (typeof access !== 'string' || !access) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const req = https.get(
+      'https://api.anthropic.com/api/oauth/profile',
+      { headers: { Authorization: 'Bearer ' + access, 'anthropic-beta': 'oauth-2025-04-20' }, timeout: 8000 },
+      (res) => {
+        let body = '';
+        res.on('data', (c) => (body += c));
+        res.on('end', () => {
+          try {
+            const j = res.statusCode === 200 ? JSON.parse(body) : null;
+            const uuid = j && j.account && j.account.uuid;
+            resolve(typeof uuid === 'string' && uuid ? uuid : null);
+          } catch { resolve(null); }
+        });
+      }
+    );
+    req.on('timeout', () => req.destroy());
+    req.on('error', () => resolve(null));
+  });
+}
+function storeSnapshot(existing, live) {
+  existing.credentials = live.credentials;
+  if (existing.accountUuid === live.accountUuid) {
+    existing.oauthAccount = live.oauthAccount;
+    existing.userID = live.userID;
+  }
+  existing.capturedAt = live.capturedAt;
+  saveProfile(existing);
+}
+async function refreshCurrentProfileSnapshot() {
   const live = buildProfileFromLive();
   if (!live) return;
   const check = checkCredentials(live.credentials);
@@ -119,14 +155,18 @@ function refreshCurrentProfileSnapshot() {
     console.error('Warning: not snapshotting ' + live.email + ' (' + check.reason + '); keeping the stored copy.');
     return;
   }
-  const existing = listProfiles().find((p) => sameAccount(live, p));
-  if (existing) {
-    existing.credentials = live.credentials;
-    existing.oauthAccount = live.oauthAccount;
-    existing.userID = live.userID;
-    existing.capturedAt = live.capturedAt;
-    saveProfile(existing);
+  const profiles = listProfiles();
+  const owner = await fetchTokenOwner(live.credentials);
+  if (owner && live.accountUuid && owner !== live.accountUuid) {
+    // Newest tokens of another account, written by a session still signed in as it.
+    const real = profiles.find((p) => p.accountUuid === owner);
+    console.error('Warning: live credentials belong to ' + (real ? real.email : owner) + ', not ' + live.email +
+      '. A Claude Code session is still signed in as that account; close it.');
+    if (real) storeSnapshot(real, live);
+    return;
   }
+  const existing = profiles.find((p) => sameAccount(live, p));
+  if (existing) storeSnapshot(existing, live);
 }
 function applyProfile(p) {
   writeJsonAtomic(CREDENTIALS_FILE, p.credentials);
@@ -203,12 +243,14 @@ function ask(q) {
   }
 
   try {
-    refreshCurrentProfileSnapshot();
-    applyProfile(target);
+    await refreshCurrentProfileSnapshot();
+    // The snapshot may have just filed fresher tokens under the target itself.
+    applyProfile(readJson(profilePath(target.label)) || target);
   } catch (e) {
     console.error('Switch failed: ' + (e && e.message ? e.message : String(e)));
     process.exit(1);
   }
   console.log(`Switched to ${target.email}.`);
-  console.log('Restart any running Claude Code sessions to pick up the new credentials.');
+  console.log('Restart every running Claude Code session (all windows and terminals). One left running as the');
+  console.log('old account will refresh its token and revoke the copy saved in that profile.');
 })();
