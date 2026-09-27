@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.4
+
+No code changes; documentation and packaging only.
+
+- **README:** now explains how saved logins stay valid, what still causes a sign-in prompt and how
+  to avoid it, and why to add accounts with `/login` (not `/logout`).
+- **README:** now discloses the one network request, which checks a login's owner with Anthropic's
+  API (added in 0.1.3). It also corrects platform support: Windows and Linux. On macOS, Claude Code
+  keeps the login in the Keychain.
+- **Packaging:** internal development notes (`CLAUDE.md`) are no longer included in the extension.
+
 ## 0.1.3
 
 - **Fixed:** the login screen still appeared after switching. Two more causes:

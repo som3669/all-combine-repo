@@ -4,3 +4,5 @@ src/**
 .gitignore
 tsconfig.json
 node_modules/**
+CLAUDE.md
+*.vsix

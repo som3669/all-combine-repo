@@ -3,7 +3,7 @@
 VS Code extension (plus a Node CLI) that captures each logged-in Claude Code account as a named profile and swaps credentials on demand, without re-signing in.
 
 - Id `somshrestha.somshrestha-claude-account-switcher`, MIT. Own repo: https://github.com/som3669/claude-account-switcher
-- Current: v0.1.3 (2026-09-26), live on the Marketplace since 2026-09-26T07:35Z. On the VS Code Marketplace as `somshrestha.somshrestha-claude-account-switcher` (0.1.2 published 2026-09-04T03:49Z, confirmed via the gallery API 2026-09-26); pushed to `main`. No git tags. No vsce login is stored on this machine and there is no publish workflow: publishing needs an Azure DevOps PAT (Marketplace > Manage scope) for publisher `somshrestha`. The Marketplace rejects re-publishing an existing version.
+- Current: v0.1.4 (2026-09-27, README + packaging only; built, Marketplace upload by user). 0.1.3 live on the Marketplace since 2026-09-26T07:35Z. On the VS Code Marketplace as `somshrestha.somshrestha-claude-account-switcher` (0.1.2 published 2026-09-04T03:49Z, confirmed via the gallery API 2026-09-26); pushed to `main`. No git tags. No vsce login is stored on this machine and there is no publish workflow: publishing needs an Azure DevOps PAT (Marketplace > Manage scope) for publisher `somshrestha`. The Marketplace rejects re-publishing an existing version.
 - The parent repo (som-personal / vs-code-extenstion-setup) also still has an older tracked copy of this folder from 2026-07; this folder's own repo is the source of truth.
 
 ## Stack
@@ -41,4 +41,4 @@ VS Code commands: `Claude Account: Switch` (also the status bar item), `Capture 
 - Restart running Claude Code sessions after a switch.
 
 ## Open items
-- None. 0.1.3 is live on the Marketplace (confirmed 2026-09-27) and running in the Som profile.
+- Confirm 0.1.4 is live on the Marketplace after the user uploads it. `CLAUDE.md` and `*.vsix` are excluded from the package (`.vscodeignore`) since 0.1.4.

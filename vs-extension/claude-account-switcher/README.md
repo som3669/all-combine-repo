@@ -1,35 +1,36 @@
 # Claude Account Switcher
 
-Switch between multiple **Claude Code** accounts in VS Code **without re-signing in**.
+Switch between multiple **Claude Code** accounts in VS Code **without signing in again**.
 
-Claude Code stores its login in `~/.claude/.credentials.json` (access + refresh token) and
-account identity in `~/.claude.json` (`oauthAccount`, `userID`). Signing into a second account
-overwrites the first, forcing a re-login every time you switch back.
+Claude Code keeps one login at a time: the tokens in `~/.claude/.credentials.json` and the account
+identity in `~/.claude.json` (`oauthAccount`, `userID`). Signing in to a second account replaces the
+first, so switching back normally means signing in again.
 
-This extension snapshots each logged-in account as a named **profile** and swaps those files on
-demand, so switching is one click and no browser sign-in.
+This extension saves each signed-in account as a named **profile** and swaps those files on demand.
+Switching is one click, with no browser sign-in.
 
 ## Usage
 
-1. Sign into account A in Claude Code as normal.
-2. Run **Claude Account: Capture Current As Profile** (or just activate — the current account is
-   auto-captured on first run).
-3. Sign into account B, then capture it too.
-4. Click the account name in the status bar (or run **Claude Account: Switch**) → pick a profile.
+1. Sign in to your first account in Claude Code as normal. The switcher saves it as a profile the
+   first time it starts (or run **Claude Account: Capture Current As Profile**).
+2. To add another account, run `/login` in Claude Code and sign in as that account, then run
+   **Claude Account: Capture Current As Profile**.
+   - Use `/login`, **not `/logout`**. Logging out ends the current account's login, which also
+     makes its saved profile useless.
+   - The browser sign-in authorizes whichever claude.ai account the browser is signed in to. Check
+     it first, or use a private window.
+3. Click the account name in the status bar (or run **Claude Account: Switch**) and pick a profile.
    VS Code reloads and Claude Code comes up on the chosen account.
-
-Commands:
 
 | Command | What it does |
 |---------|--------------|
-| `Claude Account: Switch` | Pick a profile and switch (auto reloads window) |
+| `Claude Account: Switch` | Pick a profile and switch (reloads the window) |
 | `Claude Account: Capture Current As Profile` | Save the currently signed-in account |
 | `Claude Account: Manage Profiles` | Delete a saved profile |
 
 ## Terminal switcher (no VS Code needed)
 
-`scripts/claude-switch.js` does the same swap from the command line — handy for CLI-only
-Claude Code use:
+`scripts/claude-switch.js` does the same swap from the command line, for Claude Code in a terminal:
 
 ```
 node claude-switch.js                    # interactive picker
@@ -38,25 +39,49 @@ node claude-switch.js --list             # profiles + current account
 node claude-switch.js --capture [name]   # save the current account as a profile
 ```
 
-It uses Node's JSON parser (like the extension), so it tolerates the case-differing
-duplicate keys that can appear in `~/.claude.json`. Restart any running Claude Code
-sessions after switching so they pick up the new credentials.
+After switching, restart every running Claude Code session so it picks up the new account.
 
-## How switching stays valid
+## How saved logins stay valid
 
-Claude Code **rotates** the refresh token when it refreshes. Before switching away from an
-account, the extension re-snapshots the live credentials into that account's profile, so its
-tokens stay current. A switch only fails if the target account's refresh token has fully
-expired — then Claude Code prompts a normal sign-in for that account.
+Claude Code replaces its refresh token every time it renews a login, and the old one stops working.
+A saved copy is only useful if it is kept current, so the switcher:
 
-## Where profiles live
+- saves each renewed login into the matching profile: whenever `~/.claude/.credentials.json`
+  changes, when VS Code starts, and just before switching away from an account;
+- never saves an empty or half-written login (for example while Claude Code is signed out or
+  mid-login), and keeps the previous version of each profile as `<label>.json.bak`;
+- checks which account each login really belongs to. A Claude Code session still running as the
+  account you switched away from can write its renewed login after the switch. That login is filed
+  under its own account, not the active one, and you get a warning;
+- marks profiles that can no longer sign in (a warning icon in the picker, `[BROKEN: …]` in
+  `--list`) and asks before switching to one.
 
-`~/.claude/account-switcher/<label>.json` — one file per account, containing that account's
-credentials and identity. **Treat these as secrets** (they hold live refresh tokens). They never
-leave your machine.
+## When you will still be asked to sign in
 
-## Notes
+| Cause | How to avoid it |
+|---|---|
+| You ran `/logout` for that account | Add and change accounts with `/login` and the switcher |
+| Another Claude Code window or terminal kept running as the old account after a switch | Close other Claude Code sessions before switching |
+| The account was not used on this computer for about 30 days | Switch to each account at least once a month |
+| Profile files or `.credentials.json` were copied to another computer | Sign in separately on each computer; separate sign-ins don't affect each other |
+| The login was ended on Anthropic's side (for example "Log out of all devices" on claude.ai) | Avoid this for accounts you keep in the switcher |
 
-- Windows / macOS / Linux — uses plain files under the home directory.
-- Close in-flight Claude Code sessions before switching; the auto window-reload applies the new
-  credentials to newly started sessions.
+In each case, sign in once and the switcher keeps that account's profile current again.
+
+## Privacy
+
+Profiles live in `~/.claude/account-switcher/<label>.json`, one file per account, holding that
+account's tokens and identity. **Treat them as secrets.** Don't commit or share them.
+
+To check which account a login belongs to, the switcher sends that login's access token to
+Anthropic's API (`https://api.anthropic.com/api/oauth/profile`), once per login. It makes no other
+network requests and sends nothing anywhere else.
+
+## Requirements and notes
+
+- Windows and Linux, where Claude Code keeps its login in `~/.claude/.credentials.json`. On macOS
+  Claude Code normally keeps the login in the Keychain, which this extension does not read.
+- If you use VS Code profiles, install the extension in the profile your windows actually use. For a
+  `.vsix`: `code --install-extension <file>.vsix --profile "<profile name>"`.
+- Remove the old 0.1.0 build (`somshrestha.claude-account-switcher`) if you have it. It takes over
+  the same commands without these protections; the switcher offers to uninstall it.
