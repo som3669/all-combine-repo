@@ -44,7 +44,7 @@ VS Code commands: `Claude Account: Switch` (also the status bar item), `Capture 
   4. A credentials file with no `claudeAiOauth` (only `mcpOAuth`) used to count as valid and could overwrite a good profile; it is now "no Claude login".
   5. claude.ai requires a *recent* sign-in to authorize Claude Code: the authorize page flashes, then `claude.ai/login?reauth=1&from=logout&returnTo=...`. That's claude.ai, not Claude Code (its binary opens `https://claude.com/cai/oauth/authorize` with no reauth parameter). Known loop bug when `state` is dropped: anthropics/claude-code#77966.
   6. Claude Code's VS Code extension notices account changes made in other windows ("The signed-in account changed outside this window ... refreshing every webview"), and uses a refresh lock across processes ("another Claude Code process is holding the refresh lock").
-  Tests: a Node harness that copies the real files into a scratch fake home and drives the CLI with `USERPROFILE`/`HOME` (13 checks: mark, keep mark on re-apply, clear on new login, no-login file not saved).
+  Tests: a Node harness that copies the real files into a scratch fake home and drives the CLI with `USERPROFILE`/`HOME` (12 checks: mark, keep mark on re-apply, clear on new login, no-login file not saved).
 - Fixes must be mirrored in both `src/extension.ts` and `scripts/claude-switch.js`.
 - Restart running Claude Code sessions after a switch.
 
