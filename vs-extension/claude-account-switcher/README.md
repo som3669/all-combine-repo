@@ -46,15 +46,20 @@ After switching, restart every running Claude Code session so it picks up the ne
 Claude Code replaces its refresh token every time it renews a login, and the old one stops working.
 A saved copy is only useful if it is kept current, so the switcher:
 
-- saves each renewed login into the matching profile: whenever `~/.claude/.credentials.json`
-  changes, when VS Code starts, and just before switching away from an account;
+- saves each renewed login into the profile of the account Claude Code says is signed in
+  (`~/.claude.json`): whenever `~/.claude/.credentials.json` changes, when VS Code starts, just
+  before switching away from an account, and when VS Code closes;
 - never saves an empty or half-written login (for example while Claude Code is signed out or
   mid-login), and keeps the previous version of each profile as `<label>.json.bak`;
-- checks which account each login really belongs to. A Claude Code session still running as the
-  account you switched away from can write its renewed login after the switch. That login is filed
-  under its own account, not the active one, and you get a warning;
-- marks profiles that can no longer sign in (a warning icon in the picker, `[BROKEN: …]` in
-  `--list`) and asks before switching to one.
+- remembers when Claude Code fails to renew a saved login because Anthropic has ended it. The
+  profile is marked **needs sign-in**, so the next switch tells you instead of quietly showing the
+  login screen again. The mark clears as soon as you sign in to that account;
+- marks profiles that can no longer sign in (a warning icon in the picker, `[NEEDS SIGN-IN]` or
+  `[BROKEN: …]` in `--list`) and asks before switching to one.
+
+A Claude Code session still running as the account you switched away from can write that
+account's renewed login after the switch, so close or restart other Claude Code sessions,
+especially ones in terminals, when you switch.
 
 ## When you will still be asked to sign in
 
@@ -68,14 +73,18 @@ A saved copy is only useful if it is kept current, so the switcher:
 
 In each case, sign in once and the switcher keeps that account's profile current again.
 
+**Signing in asks you to sign in to claude.ai again, even though you are signed in there.** To
+connect Claude Code, claude.ai requires a *recent* sign-in, so it may show the Authorize page
+briefly and then its sign-in page. Sign in there with the same account, then click **Authorize**.
+To go straight to Authorize, sign out of claude.ai and back in just before you start the sign-in.
+
 ## Privacy
 
 Profiles live in `~/.claude/account-switcher/<label>.json`, one file per account, holding that
 account's tokens and identity. **Treat them as secrets.** Don't commit or share them.
 
-To check which account a login belongs to, the switcher sends that login's access token to
-Anthropic's API (`https://api.anthropic.com/api/oauth/profile`), once per login. It makes no other
-network requests and sends nothing anywhere else.
+The switcher makes no network requests. It only reads and writes files in your home directory;
+Claude Code itself does all signing in and renewing.
 
 ## Requirements and notes
 

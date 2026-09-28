@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.5
+
+- **New:** when Claude Code fails to renew a restored login (Anthropic has ended it), the profile
+  is marked **needs sign-in**. Switching to it says so up front instead of silently landing on the
+  login screen every time, and the mark clears as soon as that account signs in again.
+- **Removed:** the account-ownership check added in 0.1.3. It sent the login's access token to
+  Anthropic's API from the extension, and Anthropic's terms don't allow third-party tools to use
+  Claude.ai credentials. The switcher now makes no network requests; renewed logins are filed
+  under the account `~/.claude.json` names, as before 0.1.3. Every save is now synchronous, so the
+  snapshot on window close always runs.
+- **Fixed:** a credentials file with no Claude login in it (only MCP entries) counted as valid and
+  could be saved over a good profile. It now counts as signed out.
+- **README:** explains claude.ai's "sign in again" step before Authorize.
+
 ## 0.1.4
 
 No code changes; documentation and packaging only.

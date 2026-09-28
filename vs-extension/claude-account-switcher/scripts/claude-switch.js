@@ -14,7 +14,6 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const https = require('https');
 const readline = require('readline');
 
 const HOME = os.homedir();
@@ -48,9 +47,9 @@ function writeJsonAtomic(file, data) {
 function checkCredentials(creds) {
   if (!creds || typeof creds !== 'object') return { ok: false, reason: 'credentials file unreadable' };
   const o = creds.claudeAiOauth;
-  if (!o || typeof o !== 'object') {
-    return Object.keys(creds).length > 0 ? { ok: true } : { ok: false, reason: 'credentials file is empty' };
-  }
+  // Without claudeAiOauth there is no Claude login in the file (it may still hold
+  // mcpOAuth entries). Saving that would overwrite a good profile.
+  if (!o || typeof o !== 'object') return { ok: false, reason: 'no Claude login in the credentials file' };
   const access = typeof o.accessToken === 'string' ? o.accessToken.trim() : '';
   const refresh = typeof o.refreshToken === 'string' ? o.refreshToken.trim() : '';
   if (!refresh) return { ok: false, reason: 'no refresh token (signed out or mid-login)' };
@@ -58,6 +57,24 @@ function checkCredentials(creds) {
   const rExp = typeof o.refreshTokenExpiresAt === 'number' ? o.refreshTokenExpiresAt : 0;
   if (rExp && rExp <= Date.now()) return { ok: false, reason: 'refresh token expired ' + new Date(rExp).toLocaleString() };
   return { ok: true };
+}
+// A saved login that Claude Code already failed to renew is dead even though its
+// fields look fine; restoring it again only brings the login screen back.
+function checkProfile(p) {
+  if (p.signInNeeded) {
+    return { ok: false, reason: 'needs one sign-in: Claude Code could not renew this saved login (' + new Date(p.signInNeeded).toLocaleString() + ')' };
+  }
+  return checkCredentials(p.credentials);
+}
+// After Anthropic rejects a refresh token (and on /logout), Claude Code rewrites
+// .credentials.json with empty tokens and expiresAt 0, keeping the other fields.
+function isRejectedLogin(creds) {
+  const o = creds && creds.claudeAiOauth;
+  return !!o && typeof o === 'object' && !o.accessToken && !o.refreshToken;
+}
+function refreshTokenOf(creds) {
+  const r = creds && creds.claudeAiOauth && creds.claudeAiOauth.refreshToken;
+  return typeof r === 'string' ? r : '';
 }
 function ensureProfilesDir() {
   if (!fs.existsSync(PROFILES_DIR)) fs.mkdirSync(PROFILES_DIR, { recursive: true });
@@ -111,61 +128,38 @@ function buildProfileFromLive(label) {
 function sameAccount(live, p) {
   return !!live && ((live.accountUuid && p.accountUuid === live.accountUuid) || p.email === live.email);
 }
-// .credentials.json can be rewritten by a Claude Code process still running as
-// the previous account, so ask Anthropic who owns the token instead of trusting
-// .claude.json. Resolves null when it can't tell (offline, expired token).
-function fetchTokenOwner(creds) {
-  const access = creds && creds.claudeAiOauth && creds.claudeAiOauth.accessToken;
-  if (typeof access !== 'string' || !access) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    const req = https.get(
-      'https://api.anthropic.com/api/oauth/profile',
-      { headers: { Authorization: 'Bearer ' + access, 'anthropic-beta': 'oauth-2025-04-20' }, timeout: 8000 },
-      (res) => {
-        let body = '';
-        res.on('data', (c) => (body += c));
-        res.on('end', () => {
-          try {
-            const j = res.statusCode === 200 ? JSON.parse(body) : null;
-            const uuid = j && j.account && j.account.uuid;
-            resolve(typeof uuid === 'string' && uuid ? uuid : null);
-          } catch { resolve(null); }
-        });
-      }
-    );
-    req.on('timeout', () => req.destroy());
-    req.on('error', () => resolve(null));
-  });
-}
 function storeSnapshot(existing, live) {
-  existing.credentials = live.credentials;
-  if (existing.accountUuid === live.accountUuid) {
-    existing.oauthAccount = live.oauthAccount;
-    existing.userID = live.userID;
+  // Re-applying the login Claude Code failed to renew must not clear the mark;
+  // only a new login (a different refresh token) does.
+  if (existing.signInNeeded) {
+    if (refreshTokenOf(existing.credentials) === refreshTokenOf(live.credentials)) return;
+  } else if (JSON.stringify(existing.credentials) === JSON.stringify(live.credentials)) {
+    return;
   }
+  existing.credentials = live.credentials;
+  existing.oauthAccount = live.oauthAccount;
+  existing.userID = live.userID;
   existing.capturedAt = live.capturedAt;
+  delete existing.signInNeeded;
   saveProfile(existing);
 }
-async function refreshCurrentProfileSnapshot() {
+function refreshCurrentProfileSnapshot() {
   const live = buildProfileFromLive();
   if (!live) return;
   const check = checkCredentials(live.credentials);
   if (!check.ok) {
     // Never overwrite a good profile with signed-out / half-written credentials.
     console.error('Warning: not snapshotting ' + live.email + ' (' + check.reason + '); keeping the stored copy.');
+    // Claude Code blanked the login: the stored copy is the one it failed to renew.
+    const p = isRejectedLogin(live.credentials) && listProfiles().find((x) => sameAccount(live, x));
+    if (p && !p.signInNeeded && checkCredentials(p.credentials).ok) {
+      p.signInNeeded = new Date().toISOString();
+      saveProfile(p);
+      console.error('Marked "' + p.label + '" as needing one sign-in.');
+    }
     return;
   }
-  const profiles = listProfiles();
-  const owner = await fetchTokenOwner(live.credentials);
-  if (owner && live.accountUuid && owner !== live.accountUuid) {
-    // Newest tokens of another account, written by a session still signed in as it.
-    const real = profiles.find((p) => p.accountUuid === owner);
-    console.error('Warning: live credentials belong to ' + (real ? real.email : owner) + ', not ' + live.email +
-      '. A Claude Code session is still signed in as that account; close it.');
-    if (real) storeSnapshot(real, live);
-    return;
-  }
-  const existing = profiles.find((p) => sameAccount(live, p));
+  const existing = listProfiles().find((p) => sameAccount(live, p));
   if (existing) storeSnapshot(existing, live);
 }
 function applyProfile(p) {
@@ -206,8 +200,11 @@ function ask(q) {
     console.log('Current: ' + (live ? live.email : 'not signed in'));
     console.log('Profiles:');
     for (const p of profiles) {
-      const c = checkCredentials(p.credentials);
-      console.log(`  ${sameAccount(live, p) ? '*' : ' '} ${p.label.padEnd(30)} ${p.email}${c.ok ? '' : '  [BROKEN: ' + c.reason + ']'}`);
+      const c = checkProfile(p);
+      const note = c.ok ? '' : p.signInNeeded
+        ? '  [NEEDS SIGN-IN since ' + new Date(p.signInNeeded).toLocaleString() + ']'
+        : '  [BROKEN: ' + c.reason + ']';
+      console.log(`  ${sameAccount(live, p) ? '*' : ' '} ${p.label.padEnd(30)} ${p.email}${note}`);
     }
     return;
   }
@@ -224,7 +221,7 @@ function ask(q) {
     if (!target) { console.error(`No profile matching "${nameArg}".`); process.exit(1); }
   } else {
     console.log('Current: ' + (live ? live.email : 'not signed in') + '\n');
-    profiles.forEach((p, i) => console.log(`  [${i + 1}] ${p.label}  <${p.email}>${sameAccount(live, p) ? '  (current)' : ''}`));
+    profiles.forEach((p, i) => console.log(`  [${i + 1}] ${p.label}  <${p.email}>${sameAccount(live, p) ? '  (current)' : ''}${checkProfile(p).ok ? '' : '  (needs sign-in)'}`));
     const sel = parseInt(await ask('\nSwitch to # '), 10);
     if (!(sel >= 1 && sel <= profiles.length)) { console.error('Invalid selection.'); process.exit(1); }
     target = profiles[sel - 1];
@@ -233,18 +230,20 @@ function ask(q) {
   if (sameAccount(live, target)) { console.log(`Already on ${target.email}.`); return; }
 
   // Applying unusable credentials is exactly what produces the login screen.
-  const targetCheck = checkCredentials(target.credentials);
+  const targetCheck = checkProfile(target);
   if (!targetCheck.ok) {
-    console.error(`Profile "${target.label}" cannot sign in: ${targetCheck.reason}.`);
+    console.error(`Profile "${target.label}" ${target.signInNeeded ? targetCheck.reason : 'cannot sign in: ' + targetCheck.reason}.`);
     if (!flag('--force')) {
-      console.error('Switching would show the login screen. Re-run with --force to switch anyway.');
+      console.error(target.signInNeeded
+        ? `Re-run with --force to switch, then sign in as ${target.email}; the switcher saves the new login.`
+        : 'Switching would show the login screen. Re-run with --force to switch anyway.');
       process.exit(1);
     }
   }
 
   try {
-    await refreshCurrentProfileSnapshot();
-    // The snapshot may have just filed fresher tokens under the target itself.
+    refreshCurrentProfileSnapshot();
+    // Re-read: the profile on disk is the newest copy of the target.
     applyProfile(readJson(profilePath(target.label)) || target);
   } catch (e) {
     console.error('Switch failed: ' + (e && e.message ? e.message : String(e)));
