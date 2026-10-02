@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.6
+
+- **Fixed:** switching while Claude Code was renewing a login lost that account's login. The
+  switch saved the refresh token Anthropic was about to retire, and the renewed one never reached
+  the profile, so switching back later showed the sign-in screen. The switcher (extension and
+  terminal script) now holds Claude Code's own renewal locks (`~/.claude/.oauth_refresh.lock` and
+  `~/.claude.lock`) while it saves and swaps. If a renewal is in progress, it waits for it to
+  finish, up to 20 seconds, then saves the renewed login. A lock untouched for 60 seconds is treated
+  as abandoned, the same rule Claude Code uses.
+
 ## 0.1.5
 
 - **New:** when Claude Code fails to renew a restored login (Anthropic has ended it), the profile

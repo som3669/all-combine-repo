@@ -162,6 +162,41 @@ function refreshCurrentProfileSnapshot() {
   const existing = listProfiles().find((p) => sameAccount(live, p));
   if (existing) storeSnapshot(existing, live);
 }
+// Claude Code renews a login while holding these lock directories (proper-lockfile,
+// stale after 60s): the current one first, then the legacy `<claude dir>.lock`.
+// Switching without them races a renewal in flight: the switch-away snapshot saves
+// the refresh token Anthropic is about to retire, and the renewed one is lost.
+const LOCK_STALE_MS = 60000;
+function refreshLockDirs() {
+  let real = CLAUDE_DIR;
+  try { real = fs.realpathSync(CLAUDE_DIR); } catch { /* use as is */ }
+  return [path.join(CLAUDE_DIR, '.oauth_refresh.lock'), real + '.lock'];
+}
+function tryLock(dir) {
+  try { fs.mkdirSync(dir); return true; } catch (e) { if (!e || e.code !== 'EEXIST') throw e; }
+  try {
+    // Same rule Claude Code applies: a lock not touched for 60s has a dead holder.
+    if (Date.now() - fs.statSync(dir).mtimeMs > LOCK_STALE_MS) { fs.rmdirSync(dir); fs.mkdirSync(dir); return true; }
+  } catch { /* raced with its holder: still busy */ }
+  return false;
+}
+function sleep(ms) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }
+function withRefreshLocks(fn, timeoutMs = 20000) {
+  const held = [];
+  const deadline = Date.now() + timeoutMs;
+  try {
+    for (const dir of refreshLockDirs()) {
+      while (!tryLock(dir)) {
+        if (Date.now() > deadline) throw new Error('Claude Code is renewing a login right now. Try again in a moment.');
+        sleep(250);
+      }
+      held.push(dir);
+    }
+    return fn();
+  } finally {
+    for (const dir of held.reverse()) { try { fs.rmdirSync(dir); } catch { /* ignore */ } }
+  }
+}
 function applyProfile(p) {
   writeJsonAtomic(CREDENTIALS_FILE, p.credentials);
   const config = readJson(CONFIG_FILE) || {};
@@ -242,9 +277,11 @@ function ask(q) {
   }
 
   try {
-    refreshCurrentProfileSnapshot();
-    // Re-read: the profile on disk is the newest copy of the target.
-    applyProfile(readJson(profilePath(target.label)) || target);
+    withRefreshLocks(() => {
+      refreshCurrentProfileSnapshot();
+      // Re-read: the profile on disk is the newest copy of the target.
+      applyProfile(readJson(profilePath(target.label)) || target);
+    });
   } catch (e) {
     console.error('Switch failed: ' + (e && e.message ? e.message : String(e)));
     process.exit(1);

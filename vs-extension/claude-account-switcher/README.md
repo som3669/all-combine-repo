@@ -51,6 +51,9 @@ A saved copy is only useful if it is kept current, so the switcher:
   before switching away from an account, and when VS Code closes;
 - never saves an empty or half-written login (for example while Claude Code is signed out or
   mid-login), and keeps the previous version of each profile as `<label>.json.bak`;
+- switches only while holding Claude Code's own login-renewal lock. If Claude Code is renewing a
+  login at that moment, the switch waits for it to finish and saves the renewed login. (Saving the
+  login it was replacing would leave that account with a login Anthropic has already retired.);
 - remembers when Claude Code fails to renew a saved login because Anthropic has ended it. The
   profile is marked **needs sign-in**, so the next switch tells you instead of quietly showing the
   login screen again. The mark clears as soon as you sign in to that account;
