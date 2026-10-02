@@ -18,7 +18,8 @@ TypeScript, no runtime deps, no network requests. Single file `src/extension.ts`
 npm install
 npm run compile      # tsc -p ./
 npm run package      # vsce package (local node_modules has @vscode/vsce 2.32.0)
-code --install-extension somshrestha-claude-account-switcher-<ver>.vsix --profile Som --force   # then reload window
+code --install-extension somshrestha-claude-account-switcher-<ver>.vsix --profile Som --force   # user's main profile
+code --install-extension somshrestha-claude-account-switcher-<ver>.vsix --force                  # Default profile (other workspaces); then reload windows
 node scripts/claude-switch.js [--list | --capture [name] | <name|email> | --force]
 ```
 VS Code commands: `Claude Account: Switch` (also the status bar item), `Capture Current As Profile`, `Manage Profiles`. Output channel "Claude Account Switcher" logs snapshots/skips.
